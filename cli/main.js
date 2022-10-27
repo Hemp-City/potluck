@@ -7,7 +7,7 @@ import AnchorClient, * as helper from './helpers.js';
 
 import {APP_CONFIG} from "./config.js";
 import { BN } from 'bn.js';
-import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes/index.js';
+import { bs58, utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes/index.js';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { ASSOCIATED_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token.js';
 import * as spl from '@solana/spl-token';
@@ -84,6 +84,55 @@ createCommand('init-session')
 
 })
 
+createCommand("update-session")
+    .argument("<session_id>")
+    .option("-p,--price <number>")
+    .option("-s,--sTS <number>","Start timestamp")
+    .option("-e,--eTS <number>","End timestamp")
+    .option("-P,--maxPt <number>","Max paid tickets")
+    .option("-F,--maxFt <number>","Max free tickets")
+    .action(async (session_id,opts)=>{
+        let session_acc = (await getSessionAccountById(session_id));
+
+        console.log(opts)
+        console.log(session_acc.account)
+        // new BN().
+        const sTS = opts.sTS? opts.sTS : session_acc.account.startTimestamp.toNumber();
+        const eTS = opts.eTS ? opts.eTS : session_acc.account.endTimestamp.toNumber();
+        const maxPt = opts.maxPt ? opts.maxPt : session_acc.account.maxPaidTicketsPerEntrant
+        const maxFt = opts.maxFt ? opts.maxFt : session_acc.account.maxFreeTicketsPerEntrant
+        const price = opts.price ? opts.price : session_acc.account.pricePerTicket.toNumber()
+        // return
+
+        console.log(
+            session_id,
+            sTS,
+            eTS,
+            maxPt,
+            maxFt,
+            price
+        )
+        let tx  = anchorClient.program.methods.updatePotSession(
+            new BN(parseInt(session_id)),
+            new BN(parseInt(sTS)),
+            new BN(parseInt(eTS)),
+            new BN(parseInt(maxPt)),
+            new BN(parseInt(maxFt)),
+            new BN(parseInt(price))
+        ).accounts({
+            potSessionAcc:session_acc.publicKey
+        }
+        )
+        .signers([
+            wallet
+        ])
+
+        let pdas = (await tx.pubkeys()).potSessionAcc.toBase58()
+        console.log(pdas,session_acc.publicKey.toBase58())
+        tx = await tx.rpc()
+        console.log("Update success: ",tx)
+    })
+
 createCommand("buy-ticket").argument("<session_id>").action(async function(session_id){
     let session_acc = (await getSessionAccountById(session_id));
     let payment_token_mint = session_acc.account.paymentTokenMint;
@@ -110,8 +159,8 @@ createCommand("buy-ticket").argument("<session_id>").action(async function(sessi
     console.log("Assc accounts = Team:",team_treasury_assc_acc.toBase58(),"Buyer:",buyer_token_acc.toBase58())
     let tx = anchorClient.program.methods.buyTicket(
         new BN(session_id,'le'),
-        Buffer.from(anchor.utils.bytes.utf8.encode("hey")), //identifier
-        Buffer.from(anchor.utils.bytes.utf8.encode("hey")) // invite code
+        // Buffer.from(anchor.utils.bytes.utf8.encode("hey")), //identifier
+        // Buffer.from(anchor.utils.bytes.utf8.encode("hey")) // invite code
     ).accounts(
         {
             potSessionAcc:session_acc.publicKey,
@@ -143,14 +192,14 @@ createCommand("show-session").argument("<session_id>").action(async function(ses
         }
     }
     
-    
     let accounts = await anchorClient.program.account.potSession.all([filter])
     let data = accounts[0].account
+    
     console.log(accounts[0].account)
     console.log("Entrants pubkey:",accounts[0].account.entrants.toBase58())
     let entrants = await anchorClient.program.account.entrants.fetch(accounts[0].account.entrants);
 
-
+    
     console.log(`
         SESSION: ${data.sessionId} ,
         SESSION KEY: ${accounts[0].publicKey.toBase58()},
@@ -162,7 +211,8 @@ createCommand("show-session").argument("<session_id>").action(async function(ses
         maxFreeTickets: ${data.maxFreeTicketsPerEntrant}
         creator: ${data.creator.toBase58()},
         paymentTokenMint: ${data.paymentTokenMint.toBase58()}
-        pricePerTIcket: ${data.pricePerTicket.toString()}
+        pricePerTIcket: ${data.pricePerTicket.toNumber()},
+        winner: ${data.winner?data.winner.toBase58():"None"}
     `)
     // console.log("Entrants:",entrants)
     // accounts[0].entrants;
@@ -230,9 +280,104 @@ createCommand("show-user").argument("<session_id>").action(async function(sessio
     console.log("user account:",user_acc.toBase58())
     // return
     let data = await anchorClient.program.account.userAccount.fetch(user_acc)
-
+    
     console.log(data)
 
+})
+
+createCommand("dump-entrants").argument("<session_id>").action(async function(session_id){
+    let session_acc = await getSessionAccountById(session_id)
+    
+    
+    let entrants = session_acc.account.entrants
+    let entrants_info = await anchorClient.program.account.entrants.fetch(entrants);
+
+    console.log("entrant key:",entrants.toBase58());
+
+    let data = await anchorClient.connection.getAccountInfo(entrants)
+
+    let sliced_data = data.data.slice(16,32*entrants_info.total);
+
+    let occurences = {}
+    for(let i=32; i<32*entrants_info.total; i+=32){
+        let slice = data.data.slice(i,i+32);
+
+        let addr = bs58.encode(slice)
+        
+
+        console.log(addr)
+    }
+
+    // console.log(entrants_info)
+    console.log(sliced_data)
+    // console.log(data)
+
+})
+
+createCommand("get-inviter").argument("<session_id>").argument('<invite_code>').action(async function(session_id,invite_code){
+
+    
+    let filter = {
+        memcmp:{
+            offset: 8+(1+32)+4, // disc + ...
+            bytes: bs58.encode(Buffer.concat(
+                [
+                    Buffer.from(utf8.encode(invite_code)),
+                    (new BN(session_id, 'le')).toBuffer()
+                ]
+                )
+            )
+        }
+    }
+    try{
+
+        let data = await anchorClient.program.account.userAccount.all([filter])
+
+        
+        console.log(data[0].publicKey.toBase58())
+    }
+    catch(e){
+        console.log(e)
+
+    }
+
+})
+
+createCommand("close-user").argument("<session_id>").argument('<user_pubkey>').action(async function(session_id,user_pubkey){
+
+    let tx = await anchorClient.program.methods.closeUserAccount(
+        new BN(session_id,'le'),
+    ).accounts({
+
+        user:new web3.PublicKey(user_pubkey),
+        payer:wallet.publicKey,
+    }
+    ).signers([
+        wallet
+    ]).rpc();
+
+    console.log(tx)
+})
+
+
+createCommand("reveal-winner").argument("<session_id>").action(async function(session_id){
+
+    let session = await getSessionAccountById(session_id)
+    let entrants = session.account.entrants;
+    // let recent_block_hash = await anchorClient.connection.getLatestBlockhash()
+    
+    // console.log(recent_block_hash)
+    // return
+    let tx = await anchorClient.program.methods.revealWinner(
+        new BN(session_id,'le'),
+    ).accounts({
+        entrants:entrants,
+        recentBlockhashes:web3.SYSVAR_RECENT_BLOCKHASHES_PUBKEY,
+        payer:wallet.publicKey
+
+    }).rpc()
+
+    console.log(tx)
 })
 
 createCommand("create-account").argument("<space_needed>").action(space=>{

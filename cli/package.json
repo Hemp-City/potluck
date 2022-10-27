@@ -1,16 +1,21 @@
 {
-  "name": "chubby-troops",
+  "name": "potluck-cli",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "run": "node main.js"
+    "run": "node main.js",
+    "build": "babel . -d lib"
+
   },
   "type": "module",
   "author": "",
   "license": "ISC",
+  "bin": "./main.js",
   "devDependencies": {
+    "@babel/cli": "^7.19.3",
+    "@babel/core": "^7.19.3",
     "@types/node": "^17.0.24"
   },
   "dependencies": {
@@ -20,5 +25,15 @@
     "@solana/web3.js": "^1.39.0",
     "commander": "^9.2.0",
     "moment": "^2.29.4"
+  },
+  "pkg": {
+    "scripts": "*.js",
+    "assets": [
+      "../target/idl/potluck.json"
+    ],
+    "targets": [
+      "latest-win-x64"
+    ],
+    "outputPath": "dist"
   }
 }

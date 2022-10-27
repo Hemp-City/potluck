@@ -1,7 +1,6 @@
 // Accounts structs
 use anchor_lang::prelude::*;
 
-
 #[account]
 pub struct PotSession{
     pub session_id : u16,

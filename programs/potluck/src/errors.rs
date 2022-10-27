@@ -43,4 +43,7 @@ pub enum PotluckError{
 
     #[msg("Prize airdrop failed")]
     PrizeAirdropFailed,
+
+    #[msg("Invalid quantity")]
+    InvalidQuantity,
 }

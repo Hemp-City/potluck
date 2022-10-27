@@ -1,4 +1,4 @@
-use std::cell::{Ref, RefMut};
+use std::{cell::{Ref, RefMut}, ops::Add};
 
 use anchor_lang::prelude::*;
 
@@ -27,14 +27,18 @@ impl Entrants {
         &mut self,
         mut entrants_data: RefMut<&mut [u8]>,
         entrant: Pubkey,
+        quantity:u16,
     ) -> Result<()> {
-        if self.total >= self.max {
+        if self.total.add(quantity as u32) >= self.max {
             return Err(PotluckError::NotEnoughTicketsLeft.into());
         }
+
+        msg!("Appending entrant {}",entrant.to_string());
         let current_index = Entrants::BASE_SIZE + 32 * self.total as usize;
-        let entrant_slice: &mut [u8] = &mut entrants_data[current_index..current_index + 32];
-        entrant_slice.copy_from_slice(&entrant.to_bytes());
-        self.total += 1;
+        let entrant_slice: &mut [u8] = &mut entrants_data[current_index..current_index + 32*quantity as usize];
+        entrant_slice.copy_from_slice(&entrant.to_bytes().repeat(quantity as usize));
+
+        self.total += quantity as u32;
 
         Ok(())
     }

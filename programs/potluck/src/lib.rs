@@ -13,7 +13,7 @@ pub mod recent_blockhashes;
 // use sanitizer::StringSanitizer;
 // use anchor_spl::token::{TokenAccount, Token, Mint, Transfer};
 
-const INVITES_PER_TICKET:u16 = 2; // 1 Free ticket for every 2 invites  
+const INVITES_PER_TICKET:u16 = 1; // 1 Free ticket for every 2 invites  
 const TEAM_TREASURY:&str = "6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR";
 const TEAM_FEES_PERC:u8 = 10;
 const POT_PERC:u8 = 90;
@@ -65,12 +65,13 @@ pub mod potluck {
     pub fn buy_ticket(
         ctx:Context<BuyTicket>,
         session_id:u16,
-        identifier:String,
-        invite_code:String, // optional
+        quantity:u16
+        // identifier:String,
+        // invite_code:String, // optional
 
     ) -> Result<()> {
 
-        instructions::buy_ticket::handler(ctx, session_id, identifier, invite_code)
+        instructions::buy_ticket::handler(ctx, session_id,quantity)
 
     }
 
@@ -100,10 +101,18 @@ pub mod potluck {
             session_id, 
             start_timestamp, 
             end_timestamp, 
-            max_free_tickets_per_entrant,
-             max_paid_tickets_per_entrant,
+            max_paid_tickets_per_entrant,
+             max_free_tickets_per_entrant,
              price_per_ticket
         )
+    }
+
+    pub fn close_user_account(
+        ctx:Context<CloseUserAccount>,
+        session_id:u16,
+    )->Result<()>{
+
+        instructions::close_user_account::handler(ctx, session_id)
     }
 
 }

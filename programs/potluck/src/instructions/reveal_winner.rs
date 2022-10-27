@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*, solana_program::sysvar};
+use anchor_lang::{prelude::*, solana_program::sysvar::{self, recent_blockhashes::RecentBlockhashes}};
 
 use crate::{state::{PotSession, Entrants}, TIME_BUFFER, errors::PotluckError, recent_blockhashes, randomness_tools};
 
@@ -21,8 +21,7 @@ pub struct RevealWinner<'info>{
     #[account(mut)]
     pub entrants : Box<Account<'info,Entrants>>,
     
-    // pub 
-     /// CHECK: sysvar address check is hardcoded, we want to avoid the default deserialization
+    /// CHECK: sysvar address check is hardcoded, we want to avoid the default deserialization
     #[account(address = sysvar::recent_blockhashes::ID)]
      pub recent_blockhashes: UncheckedAccount<'info>,
     #[account()]
@@ -33,6 +32,7 @@ pub struct RevealWinner<'info>{
 
 
 pub fn handler(ctx: Context<RevealWinner>,_session_id: u16) -> Result<()> {
+    
     let clock = Clock::get()?;
     let session = &mut ctx.accounts.pot_session_acc;
     let entrants = &ctx.accounts.entrants;
@@ -55,6 +55,8 @@ pub fn handler(ctx: Context<RevealWinner>,_session_id: u16) -> Result<()> {
 
     let winner_rand = randomness_tools::expand(randomness, 1);
     let winner_index = winner_rand % entrants.total;
+
+    msg!("Winner index : {}",winner_index);
 
     let winner_pubkey = Entrants::get_entrant(
         entrants.to_account_info().data.borrow(),
