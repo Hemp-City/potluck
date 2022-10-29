@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import Image from 'next/image'
 // import bannerImg from '../public/potluck-banner.png';
 import bannerImg from '../public/poster.jpeg';
@@ -17,13 +17,19 @@ import { useSearchParam, } from 'react-use';
 import ClaimPrize from './claim_prize';
 
 // injectStyle()
-enum Tabs  {
+export const potluckSDK = new PotluckSDK(parseInt(process.env.NEXT_PUBLIC_SESSION_ID!));
+const enum Tabs  {
     Live,
     ClaimPrize,
     Leaderboard,
     Mysubscription
 }
-export const potluckSDK = new PotluckSDK(parseInt(process.env.NEXT_PUBLIC_SESSION_ID!));
+
+const enum FetchState{
+    Idle,
+    Pending
+}
+const SESSION_LOADER_TAG = "session_loader";
 // const endTimestamp = new Date("30 Oct 2022 00:00:00").getTime()/1000
 let sessionStaticInfo = {
     price:1,
@@ -31,7 +37,14 @@ let sessionStaticInfo = {
     end_timestamp: new Date("10 Oct 1997 00:00:00").getTime()/1000,
     plays_left:0,
     max_paid_tickets:1,
+    max_free_tickets:0,
 }
+
+const toggleSessionLoader = () =>{
+    toast.remove(SESSION_LOADER_TAG);
+    toast.success("Session updated!");
+}
+
 function MainCard() {
     // const pot = new PotluckSDK(1);
     const wallet = useAnchorWallet()
@@ -44,37 +57,53 @@ function MainCard() {
     const [lockSession,setLockSession] = useState(false)
     const [ticketsOwned,setTicketsOwned] = useState(0);
     const quantityRef = useRef<HTMLSelectElement>(null);
-    // const [endTimestamp,setEndTimestamp] = useState()
+    // const [fetchState,setFetchState] = useState(FetchState.Idle);
 
+    const fetchStateMemo = useMemo(()=>{
+        return { state:FetchState.Idle};
+    },[    ]);
+
+    const toggleFetchState = () =>{
+        fetchStateMemo.state = fetchStateMemo.state == FetchState.Idle ? FetchState.Pending : FetchState.Idle;
+    }
+    // const [endTimestamp,setEndTimestamp] = useState()
     console.count("refresh component main")
     // console.log("program id x:",process.env.NEXT_PUBLIC_PROGRAM_ID);
     // const [endsInDate,setEndsInDate] = useState(new Date()) // day, hours, min, secs
     // console.table([endsInTime])
+
+    
    useEffect(() => {
 
         console.log("UseEffect called");
+
+        
         // TODO: Add free tickets count to total owned and total available
         // console.log("invite code:")
         const initSession = async ()=>{
                 console.log("Fetching session!")
 
                 // putting useraccoutn to window for global access in other component
+                toggleFetchState();
                 await potluckSDK.initSession(connected);
                 
-                (window as any).userAccount = potluckSDK.userAccount;
-                // 
-                toast.success("Session updated!")
-                setSessionInfoFetched(true);
+                // (window as any).userAccount = potluckSDK.userAccount;
+                //
+                 
+                // toast.success("Session updated!",{id:SESSION_LOADER_TAG});
+                toggleSessionLoader();
+                
+                // setSessionInfoFetched(true);
                 sessionStaticInfo.price = potluckSDK.getPricePerTicket()
                 sessionStaticInfo.estimated_prize = '$'+potluckSDK.getEstimatedPrize()
                 sessionStaticInfo.max_paid_tickets = potluckSDK.sessionInfo.account.maxPaidTicketsPerEntrant;
-
+                sessionStaticInfo.max_free_tickets = potluckSDK.sessionInfo.account.maxFreeTicketsPerEntrant;
                 if(connected && potluckSDK.userAccount){
 
                     console.log("changing plays!")
                     
                     setTicketsOwned(
-                        potluckSDK.userAccount.totalPaidTickets
+                        potluckSDK.userAccount.totalPaidTickets + potluckSDK.userAccount.totalFreeTickets
                     )
 
                     // sessionStaticInfo.plays_left = potluckSDK.userAccount.totalPaidTickets;
@@ -82,19 +111,22 @@ function MainCard() {
                 // potluckSDK.userAccoun
                 sessionStaticInfo.end_timestamp = potluckSDK.sessionInfo.account.endTimestamp.toNumber();
                 setticketsLeft(potluckSDK.entrantsData.max - potluckSDK.entrantsData.total);
-                
+
+                // 
+                // setFetchState(FetchState.Idle);
+                toggleFetchState()
         };
-        if(isBuying == false) // only after processing
+        // console.log("fetch state:",fetchStateMemo)
+        if(isBuying == false && fetchStateMemo.state == FetchState.Idle) // only after processing
             initSession();
      
-    }, [isBuying,wallet]); 
+    }, [isBuying]); 
 
     useEffect(()=>{
         console.log("Wallet changed!")
         if(connected){
 
             potluckSDK.setWallet(wallet as AnchorWallet);
-
             
         }
     },[wallet]) 
@@ -176,7 +208,7 @@ function MainCard() {
                     <a className={`tab !border-primary ${tab==Tabs.ClaimPrize?"tab-bordered tab-active":""}`}
                         onClick={()=>{setTab(Tabs.ClaimPrize)}}
                         >
-                        Claim Pot
+                        Claim Prize
                     </a> 
                     {/* <a className={`tab !border-primary ${tab==Tabs.Mysubscription?"tab-bordered tab-active":""}`} 
                         onClick={()=>setTab(Tabs.Mysubscription)}
@@ -251,7 +283,7 @@ function MainCard() {
                            <p className="text-sm">Tickets Owned</p>
                             <div className="flex items-center place-items-center gap-2">
                                 
-                                <p>{`${ticketsOwned}/${sessionStaticInfo.max_paid_tickets}`}</p>
+                                <p>{`${ticketsOwned}/${sessionStaticInfo.max_paid_tickets + sessionStaticInfo.max_free_tickets}`}</p>
                             </div>
                         </div>
                     }
@@ -273,7 +305,8 @@ function MainCard() {
                         <div className="flex items-center place-items-center gap-2">
                             <select id="quantity-select" ref={quantityRef} className="select select-primary w-full max-w-xs" >
                                 {
-                                    [...new Array(sessionStaticInfo.max_paid_tickets-ticketsOwned || 1)].map((x,i)=>{
+                                    [...new Array((sessionStaticInfo.max_paid_tickets??0-ticketsOwned??0) || 1)].map((x,i)=>{
+
                                         return <option value={i+1} key={i+1}>{i+1}</option>
                                     })
                                 }
@@ -306,8 +339,8 @@ function MainCard() {
                 {
                     wallet && ticketsOwned > 0 &&
                     <>
-                    <a href='#referral-modal' className='btn btn-secondary btn-outline md:mt-4 mt-2'>Invite Friends</a>
-                    <p className='text-center mt-2 md:text-sm font-thin text-xs'>Get 1 free ticket on each play using your invite link.</p>
+                        <a href='#referral-modal' className='btn btn-secondary btn-outline md:mt-4 mt-2'>Invite Friends</a>
+                        <p className='text-center mt-2 md:text-sm font-thin text-xs'>Get 1 free ticket on each play using your invite link.</p>
                     </>    
                 }
 
@@ -317,9 +350,6 @@ function MainCard() {
                     <p>{inviteCode}</p>
                     } */}
                 </div>
-
-
-            
    
             </div> 
             

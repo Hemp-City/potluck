@@ -18,7 +18,7 @@ function Navbar() {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="inline-block w-6 h-6 stroke-current"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </label>
                 </div>
-                <a className="text-2xl uppercase font-bungee-shade text-primary ">Potluck</a>
+                <a className="text-xl md:text-2xl drop-shadow-xl uppercase font-bungee-shade text-primary ">Potluck</a>
                 
                 <div className="flex-none hidden lg:block ml-4">
                     <ul className="menu menu-horizontal">
@@ -28,7 +28,7 @@ function Navbar() {
                             <span className="badge badge-xs absolute badge-accent -top-1 right-0 px-1 py-1 text-yellow-200" style={{fontSize:"10px"}}>Soon!</span> 
                         </a></li>
                         <li><a>Claim Prize</a></li>
-                        <li><a>Get Updates</a></li>
+                        <li><a href="https://playhemp.city/discord.go">Get Updates</a></li>
                         <li className="rounded-box bg-none">
                             <a href="#referral-modal" className="underline underline-offset-8 decoration-wavy text-slate-900 font-semibold decoration-slate-600">
                                     Earn Free Tickets

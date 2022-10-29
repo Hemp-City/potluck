@@ -1,3 +1,5 @@
+use std::{ops::Deref, borrow::Borrow};
+
 use anchor_lang::prelude::*;
 use anchor_spl::{token::{TokenAccount, Token, Mint, self}, associated_token::AssociatedToken};
 
@@ -41,7 +43,7 @@ pub struct ClaimPrize<'info>{
     pub system_program: Program<'info,System>,
 }
 
-pub fn handler(ctx:Context<ClaimPrize>) -> Result<()>{
+pub fn handler(ctx:Context<ClaimPrize>,session_bump:u8) -> Result<()>{
 
     let session = &mut ctx.accounts.pot_session_acc;
     let session_treasury = &mut ctx.accounts.session_treasury;
@@ -64,12 +66,24 @@ pub fn handler(ctx:Context<ClaimPrize>) -> Result<()>{
 
     // transfer tokens from treasury to winner
 
-    let session_key = session.key();
-    let session_treasury_seeds = &[
+    // let pot_session_bump = ctx.bumps.get("pot_session_acc").unwrap().to_le_bytes();
+    let pot_session_bump = session_bump.to_be_bytes();
+    // let session_key = session.key();
+    /* let session_treasury_seeds = &[
         b"pot_session_treasury".as_ref(),
         session_key.as_ref(),
+        bump.as_ref()
         // bump,
+    ]; */
+    let session_id = session.session_id.to_le_bytes();
+    let pot_session_seeds = &[
+        b"pot_session_acc".as_ref(),
+        session_id.as_ref(),
+        session.creator.as_ref(),
+        pot_session_bump.as_ref()
     ];
+
+    // Pubkey::try_find_program_address(session_treasury_seeds, )
 
     token::transfer(
         CpiContext::new(
@@ -78,13 +92,14 @@ pub fn handler(ctx:Context<ClaimPrize>) -> Result<()>{
             token::Transfer{
                 from: session_treasury.to_account_info(), 
                 to: buyer_token_acc.to_account_info(),
-                authority: session_treasury.to_account_info()
-            }
+                authority: session.to_account_info(),
+            },
         )
-        .with_signer(&[session_treasury_seeds])
+        .with_signer(&[pot_session_seeds])
         ,session_treasury.amount
-    )
-    .or(Err(PotluckError::PrizeAirdropFailed))?;
+    ).map_err(|_e|PotluckError::PrizeAirdropFailed)?;
+
+    // .or(Err(PotluckError::PrizeAirdropFailed))?;
 
     
     // set pot claimed to true

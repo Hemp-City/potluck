@@ -7,3 +7,4 @@ node_modules
 test-ledger
 cli/test-wallet.json
 cli/test-team-treasury.json
+buffer

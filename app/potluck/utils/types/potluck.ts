@@ -324,7 +324,12 @@ export type Potluck = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "sessionBump",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "updatePotSession",
@@ -643,6 +648,11 @@ export type Potluck = {
       "code": 6013,
       "name": "PrizeAirdropFailed",
       "msg": "Prize airdrop failed"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidQuantity",
+      "msg": "Invalid quantity"
     }
   ]
 };
@@ -973,7 +983,12 @@ export const IDL: Potluck = {
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "sessionBump",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "updatePotSession",
@@ -1292,6 +1307,11 @@ export const IDL: Potluck = {
       "code": 6013,
       "name": "PrizeAirdropFailed",
       "msg": "Prize airdrop failed"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidQuantity",
+      "msg": "Invalid quantity"
     }
   ]
 };

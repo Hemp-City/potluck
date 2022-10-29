@@ -1,6 +1,8 @@
 
 
-use anchor_spl::{token::{Mint, TokenAccount, Token}, mint};
+use std::str::FromStr;
+
+use anchor_spl::{token::{Mint, TokenAccount, Token}, mint, associated_token::AssociatedToken};
 
 // use anchor_spl::{token, associated_token::get_associated_token_address};
 
@@ -27,7 +29,9 @@ pub struct InitPotSession<'info>{
     pub pot_session_acc : Box<Account<'info,PotSession>>, // pot session acc
     // pub 
 
-    #[account(address = mint::USDC)]
+    #[account(
+        constraint = crate::VALID_TOKEN_MINTS.contains(&payment_token_mint.key()) == true 
+    )]
     pub payment_token_mint: Box<Account<'info,Mint>>,
 
     #[account(
@@ -43,6 +47,7 @@ pub struct InitPotSession<'info>{
     )]
     pub session_treasury: Box<Account<'info,TokenAccount>>,
 
+    // pub team_treasury: Box<Account<'info,AssociatedToken>>
     #[account(zero)]
     entrants : Box<Account<'info,Entrants>>,
     
@@ -53,6 +58,7 @@ pub struct InitPotSession<'info>{
     pub system_program: Program<'info,System>,
     pub rent: Sysvar<'info,Rent>,
 }
+
 
 
 

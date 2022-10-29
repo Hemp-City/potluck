@@ -37,7 +37,11 @@ createCommand('init-session')
     let entrants = web3.Keypair.generate()
     // let e =  web3.Keypair.generate()
     let space_needed = max_entrants*32; // 32 bytes / publickey
-    let payment_token_mint = new web3.PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); //USDC
+    let payment_token_mint = APP_CONFIG.network=="devnet"? 
+        new web3.PublicKey("9m1AUciQjityTXiqPnV1KyVZK2dzVAxFxdSVSNeJhosX"): // USDC dummy | minted by self
+        // new web3.PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"): // USDC devnet
+        new web3.PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); //USDC localnet/mainnet
+
     let team_treasury = new web3.PublicKey("6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR") // test treasruy
     // let session_treasury = 
     let max_paid_tickets_per_entrants = max_paid_tickets;
@@ -159,6 +163,8 @@ createCommand("buy-ticket").argument("<session_id>").action(async function(sessi
     console.log("Assc accounts = Team:",team_treasury_assc_acc.toBase58(),"Buyer:",buyer_token_acc.toBase58())
     let tx = anchorClient.program.methods.buyTicket(
         new BN(session_id,'le'),
+        new BN(1,'le') // quantity
+
         // Buffer.from(anchor.utils.bytes.utf8.encode("hey")), //identifier
         // Buffer.from(anchor.utils.bytes.utf8.encode("hey")) // invite code
     ).accounts(
@@ -288,19 +294,24 @@ createCommand("show-user").argument("<session_id>").action(async function(sessio
 createCommand("dump-entrants").argument("<session_id>").action(async function(session_id){
     let session_acc = await getSessionAccountById(session_id)
     
-    
+    let bb = "3VqwFviPBqG9znZa2rfh4skQ2QbU81vLrXbYQqwgiti4".slice(0,6);
+    let bc = bs58.encode(Buffer.from(bb));
+    console.log(bb,bc,bs58.decode(bc));
+
+    return
     let entrants = session_acc.account.entrants
     let entrants_info = await anchorClient.program.account.entrants.fetch(entrants);
 
     console.log("entrant key:",entrants.toBase58());
 
+    const ENTRANT_SIZE = 6;
     let data = await anchorClient.connection.getAccountInfo(entrants)
 
-    let sliced_data = data.data.slice(16,32*entrants_info.total);
+    let sliced_data = data.data.slice(16,ENTRANT_SIZE*entrants_info.total);
 
     let occurences = {}
-    for(let i=32; i<32*entrants_info.total; i+=32){
-        let slice = data.data.slice(i,i+32);
+    for(let i=ENTRANT_SIZE; i<ENTRANT_SIZE*entrants_info.total; i+=ENTRANT_SIZE){
+        let slice = data.data.slice(i,i+ENTRANT_SIZE);
 
         let addr = bs58.encode(slice)
         
@@ -380,6 +391,31 @@ createCommand("reveal-winner").argument("<session_id>").action(async function(se
     console.log(tx)
 })
 
+createCommand("claim-prize").argument("<session_id>").action(async function(session_id){
+
+    let session = await getSessionAccountById(session_id);
+    const paymentTokenMint = session.account.paymentTokenMint;
+
+        // account to recieve the proceedings
+        const recieverAsscAccount = await getOrCreateAssociatedTokenAccount(
+            anchorClient.connection,
+            this.wallet,
+            paymentTokenMint,
+            wallet.publicKey,
+        );
+
+    let tx = await anchorClient.program.methods.claimPrize().accounts(
+        {
+            potSessionAcc:session.publicKey,
+            paymentTokenMint:paymentTokenMint,
+            buyerTokenAccount:recieverAsscAccount.address,
+            payer:wallet.publicKey,
+        }
+    ).rpc();
+
+    console.log(tx)
+
+})
 createCommand("create-account").argument("<space_needed>").action(space=>{
     let acc =  web3.Keypair.generate()
 
@@ -391,6 +427,7 @@ createCommand("create-account").argument("<space_needed>").action(space=>{
 
 createCommand("transfer-tokens").argument("<mint>").argument("<amount>").requiredOption("-p --payer <path>").action(async (mint,amount,opts)=>{
     // console.log(mint,amount,payer)
+    let connection = new web3.Connection(web3.clusterApiUrl('devnet'));
     let mintKey  = new web3.PublicKey(mint)
     let payerWallet = helper.loadWalletKey(opts.payer)
 
@@ -414,9 +451,10 @@ createCommand("transfer-tokens").argument("<mint>").argument("<amount>").require
     ) 
     amount *=Math.pow(10,mintAcc.decimals);
 
+    
     // associate
     let tx = await transferChecked(
-        anchorClient.connection,
+        connection,
         payerWallet, //payer
         source, 
         mintKey,
@@ -482,11 +520,20 @@ async function createAccount(account_keypair,space_needed){
 function createCommand(command){
     return program.name("chub")
         .command(command)
+        .option('-r --rpc <devnet|mainnet|localnet>',"","localnet")
         .requiredOption("-k --keypair <path>")
         .hook("preAction",(thisCommand,actionCommand) => {
             let keypairPath = thisCommand.opts().keypair;
+            let rpc = thisCommand.opts().rpc;
             wallet = helper.loadWalletKey(keypairPath);
             // console.log(keypairPath)
+            const RPC = {
+                localnet:"http://127.0.0.1:8899",
+                devnet:web3.clusterApiUrl('devnet'),
+                mainnet:web3.clusterApiUrl('mainnet-beta')
+            }
+            APP_CONFIG.network = rpc;
+            APP_CONFIG.rpcEndpoint = RPC[rpc]
             anchorClient = helper.initAnchorClient(keypairPath,APP_CONFIG);
         });
 }

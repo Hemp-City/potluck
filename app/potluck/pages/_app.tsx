@@ -1,5 +1,3 @@
-
-
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
@@ -43,6 +41,8 @@ const App: FC<AppProps> = ({ Component, pageProps }) => {
         []
     );
 
+    
+    console.count("refresh app")
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>

@@ -7,7 +7,7 @@ import { AnchorWallet, useWallet } from '@solana/wallet-adapter-react';
 import { bs58, utf8 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { BN } from 'bn.js';
 import { ASSOCIATED_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@project-serum/anchor/dist/cjs/utils/token';
-import { getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
+import { getAccount, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 import { AnchorError, ProgramError } from '@project-serum/anchor';
 // import { Wallet } from '@project-serum/anchor/dist/cjs/provider';
 
@@ -54,9 +54,14 @@ export class PotluckSDK {
         // this.wallet = wallet;
         // console.log(process.env)
         const ep = {
-            "local":"http://localhost:8899"
+            "local":"http://localhost:8899",
+            "devnet":"https://api.devnet.solana.com",
+            "mainnet":"https://mainnet.com"
         }
-        this.connection = new Connection(ep.local)
+        this.connection = new Connection(
+             process.env.NEXT_PUBLIC_devMode?
+                (process.env.NEXT_PUBLIC_NEWORK == "DEVNET" ? ep.devnet:ep.local) : ep.mainnet
+        )
         this.provider = new anchor.AnchorProvider(
             this.connection, 
             wallet,
@@ -71,7 +76,7 @@ export class PotluckSDK {
     }
      setWallet = (_wallet:any) => {
 
-        console.log("set wallet:",_wallet)
+        // console.log("set wallet:",_wallet)
         this.wallet = _wallet;
         this.initAchorClient(_wallet)
     } 
@@ -118,7 +123,7 @@ export class PotluckSDK {
             TOKEN_PROGRAM_ID,
             ASSOCIATED_PROGRAM_ID
         );
-        console.log(buyerTokenAccountAddress.toBase58())
+        // console.log(buyerTokenAccountAddress.toBase58())
         let buyTokenAccount ;
         try{
 
@@ -130,7 +135,7 @@ export class PotluckSDK {
                 
                 
                 // check if the buyer account contains enough balance, if not throws error
-                console.log(buyTokenAccount.amount.valueOf(),this.sessionInfo.account.pricePerTicket.toNumber())
+                // console.log(buyTokenAccount.amount.valueOf(),this.sessionInfo.account.pricePerTicket.toNumber())
                 if(buyTokenAccount.amount < this.sessionInfo.account.pricePerTicket.toNumber()){
                     throw Error(PotluckErrors.InsufficientBalance);
                 }
@@ -139,8 +144,7 @@ export class PotluckSDK {
             //TODO:Throw an error to the user for this
             throw Error(PotluckErrors.USDCAccountNotFound)
         }
-        console.log("Assc accounts = Team:",
-        teamTreasuryAssociatedAccount.toBase58(),"Buyer:",buyerTokenAccountAddress.toBase58())
+
         let remainingAccounts = invite_code? [
             //fetch inviters account
             {
@@ -183,15 +187,12 @@ export class PotluckSDK {
             ])
         } */
 
-        // console.log("passws")
-        // console.log("pdas Useraccount:",(await ix.pubkeys()).userAccount?.toBase58())
-        // console.log("pdas Useraccount:",ix.pubkeys())
         let pda = await ix.pubkeys()
-        console.log("Useraccount:",pda.userAccount?.toBase58())
+        // console.log("Useraccount:",pda.userAccount?.toBase58())
 
 
         let tx = await ix.rpc();
-        console.log("tx:",tx)
+        // console.log("tx:",tx)
 
         return tx;
     }
@@ -224,7 +225,7 @@ export class PotluckSDK {
      */
     initSession = async (walletConnected:boolean = false) => {
 
-        console.log("init session called")
+        // console.log("init session called")
         if(this.sessionId){
             this.sessionInfo = await this.getSessionInfo(this.sessionId);
             
@@ -236,11 +237,11 @@ export class PotluckSDK {
             if(walletConnected){
                 this.userAccount = await this.getUserAccount()
 
-                console.log("fetched useraccount:",this.userAccount)
+                // console.log("fetched useraccount:",this.userAccount)
             }
             
-            console.log("set session info",this.sessionInfo)
-            console.log("set entrants data",this.entrantsData)
+            // console.log("set session info",this.sessionInfo)
+            // console.log("set entrants data",this.entrantsData)
         }
         // console.log("SI:",this.sessionInfo)
     }
@@ -337,7 +338,7 @@ export class PotluckSDK {
         };
         let accs = await this.program?.account.userAccount.all([filter]);
 
-        console.log("accounts:",accs)
+        // console.log("accounts:",accs)
     }
 
     checkIsWinner = async (winner:PublicKey)=>{
@@ -348,8 +349,54 @@ export class PotluckSDK {
             }
         };
         let accs = await this.program?.account.potSession.all([filter]);
+        return accs;
+        // console.log("winner:",accs)
+    }
 
-        console.log("winner:",accs)
+    claimPrize = async (session:any)=>{
+
+        if(!this.program) throw Error(PotluckErrors.UndefinedSDK);
+
+        const sessionKey = session.publicKey
+        let userAccountSeed = Buffer.alloc(2)
+        userAccountSeed.writeUInt16LE(this.sessionId)
+
+        // pass the bump to the ix, required for signing the token transfer
+        let [_,sessionBump] = await PublicKey.findProgramAddress([
+            Buffer.from("pot_session_acc"),
+            userAccountSeed,
+            session.account.creator.toBuffer()
+
+        ],
+            this.program.programId
+        );
+
+        const paymentTokenMint = session.account.paymentTokenMint;
+
+        // account to recieve the proceedings
+        const recieverAsscAccount = await getOrCreateAssociatedTokenAccount(
+            this.connection!,
+            this.wallet,
+            paymentTokenMint,
+            this.wallet.publicKey,
+        );
+
+        let tx = await this.program?.methods.claimPrize(
+            new BN(sessionBump,'le')
+        ).accounts(
+            {
+                potSessionAcc:sessionKey,
+                paymentTokenMint:paymentTokenMint,
+                buyerTokenAccount:recieverAsscAccount.address,
+                sessionTreasury:session.account.sessionTreasury,
+                payer:this.wallet.publicKey,
+            }
+        ).rpc();
+
+
+        // let pub = await tx?.pubkeys()
+        // console.log("claim prize",pub?.sessionTreasury?.toBase58());
+        return tx;
     }
     
 
@@ -361,5 +408,6 @@ export const PotluckErrors = {
     WalletNotConnected : "Wallet not connected",
     SessionNotFound:"Session not found",
     InvalidInviteCode:"Invalid invite code or not found",
+    UndefinedSDK:"Undefined SDK",
 
 }

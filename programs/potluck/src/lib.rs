@@ -1,6 +1,7 @@
 
 use anchor_lang::prelude::*;
 
+use anchor_spl::mint;
 use instructions::*;
 
 pub mod instructions;
@@ -20,6 +21,15 @@ const POT_PERC:u8 = 90;
 const TIME_BUFFER:i64 =20;
 
 declare_id!("PoTeh9dW9VEr6ApxiLintTRoWmZDF6GDRrtSu7zbTo4");
+
+pub use crate::usdc_devnet::ID as USDC_DEVNET;
+
+mod usdc_devnet {
+    use super::*;
+    declare_id!("9m1AUciQjityTXiqPnV1KyVZK2dzVAxFxdSVSNeJhosX"); // minted the address on devnet | USDC Dummy
+    // declare_id!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+}
+pub static  VALID_TOKEN_MINTS: [Pubkey;2] = [USDC_DEVNET,mint::USDC];
 
 /* 
     1. init pot session
@@ -81,9 +91,9 @@ pub mod potluck {
 
     }
 
-    pub fn claim_prize(ctx: Context<ClaimPrize>) -> Result<()>{
+    pub fn claim_prize(ctx: Context<ClaimPrize>,session_bump:u8) -> Result<()>{
 
-        instructions::claim_prize::handler(ctx)
+        instructions::claim_prize::handler(ctx,session_bump)
         
     }
     pub fn update_pot_session(
