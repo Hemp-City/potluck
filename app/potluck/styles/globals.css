@@ -4,33 +4,13 @@
 @tailwind utilities;
 /* @import url('https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap'); */
 /* @import url('https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&display=swap'); */
-@font-face {
+/* @font-face {
   font-family: "UNLEASH";
   src: url("../public/fonts/unleash/otf/unleash-unleash-400.otf");
-}
-@font-face {
-  font-family: "AGREE";
-  src: url("../public/fonts/agree/otf/agree-agree-black-800.otf");
-  font-weight: bolder;
-}
+} */
 
-@font-face {
-  font-family: "AGREE";
-  src: url("../public/fonts/agree/otf/agree-agree-bold-700.otf");
-  font-weight: bold;
-}
 
-@font-face {
-  font-family: "AGREE";
-  src: url("../public/fonts/agree/otf/agree-agree-regular-400.otf");
-  font-weight: normal;
-}
 
-@font-face {
-  font-family: "AGREE";
-  src: url("../public/fonts/agree/otf/agree-agree-thin-200.otf");
-  font-weight: lighter;
-}
 @media (prefers-color-scheme: dark) {
   
   body{
