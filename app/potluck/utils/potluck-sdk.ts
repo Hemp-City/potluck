@@ -60,7 +60,7 @@ export class PotluckSDK {
         }
         this.connection = new Connection(
              process.env.NEXT_PUBLIC_devMode?
-                (process.env.NEXT_PUBLIC_NEWORK == "DEVNET" ? ep.devnet:ep.local) : ep.mainnet
+                (process.env.NEXT_PUBLIC_NETWORK == "DEVNET" ? ep.devnet:ep.local) : ep.mainnet
         )
         this.provider = new anchor.AnchorProvider(
             this.connection, 
@@ -192,7 +192,7 @@ export class PotluckSDK {
 
 
         let tx = await ix.rpc();
-        // console.log("tx:",tx)
+        console.log("tx:",tx)
 
         return tx;
     }

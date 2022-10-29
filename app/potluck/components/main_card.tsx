@@ -120,7 +120,7 @@ function MainCard() {
         if(isBuying == false && fetchStateMemo.state == FetchState.Idle) // only after processing
             initSession();
      
-    }, [isBuying]); 
+    }, [isBuying,wallet]); 
 
     useEffect(()=>{
         console.log("Wallet changed!")
@@ -305,7 +305,7 @@ function MainCard() {
                         <div className="flex items-center place-items-center gap-2">
                             <select id="quantity-select" ref={quantityRef} className="select select-primary w-full max-w-xs" >
                                 {
-                                    [...new Array((sessionStaticInfo.max_paid_tickets??0-ticketsOwned??0) || 1)].map((x,i)=>{
+                                    [...new Array((sessionStaticInfo.max_paid_tickets-ticketsOwned) || 1)].map((x,i)=>{
 
                                         return <option value={i+1} key={i+1}>{i+1}</option>
                                     })
