@@ -7,7 +7,7 @@ import { useCountdown } from '../hooks/countdown-timer-hook';
 import CountdownTimer from './countdown_timer';
 import { AnchorWallet, useAnchorWallet, useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { PotluckSDK } from '../utils/potluck-sdk';
+import { PotluckErrors, PotluckSDK } from '../utils/potluck-sdk';
 import { AnchorError, ProgramError, Wallet } from '@project-serum/anchor';
 import toast, { Toaster } from 'react-hot-toast';
 import SimpleLoader from './simple_loader';
@@ -15,7 +15,10 @@ import nacl from 'tweetnacl';
 import ReferralComponent from './referral_component';
 import { useSearchParam, } from 'react-use';
 import ClaimPrize from './claim_prize';
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 
+const MySweetAlert = withReactContent(Swal);
 // injectStyle()
 export const potluckSDK = new PotluckSDK(parseInt(process.env.NEXT_PUBLIC_SESSION_ID!));
 const enum Tabs  {
@@ -158,8 +161,23 @@ function MainCard() {
                 }
             }
             console.log(err)
-            
             toast.error(errMessage)
+            if(errMessage == PotluckErrors.USDCAccountNotFound || errMessage == PotluckErrors.InsufficientBalance){
+                // console.log("Fire alert!");
+                let alert = MySweetAlert.fire(
+                    {
+                        title:"Insufficient USDC balance",
+                        text:"To play, add USDC in your wallet. You can also swap SOL to USDC from the wallet itself.",
+                        icon:"info",
+                        confirmButtonText:"Alright!",
+                        confirmButtonColor:"maroon",
+                        iconColor:"maroon"
+                    } 
+                )
+            }
+            // "Insufficient USDC Balance",
+            // "To play, add USDC to your wallet. You can also swap SOL to USDC from the wallet itself. ",
+            // 'info'
         }
         finally{
             toast.dismiss(loader)

@@ -402,8 +402,8 @@ export class PotluckSDK {
 }
 
 export const PotluckErrors = {
-    InsufficientBalance : "Insufficient balance",
-    USDCAccountNotFound:"USDC account not found",
+    InsufficientBalance : "Insufficient USDC balance in your wallet.",
+    USDCAccountNotFound:"Insufficient USDC balance in your wallet.",
     WalletNotConnected : "Wallet not connected",
     SessionNotFound:"Session not found",
     InvalidInviteCode:"Invalid invite code or not found",

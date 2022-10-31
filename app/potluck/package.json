@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "update:idl":"copy ../../target/types/potluck.ts utils/types/potluck.ts",
+    "update:idl": "copy ../../target/types/potluck.ts utils/types/potluck.ts",
     "dev": "next dev",
     "build": "next build",
-    "export":"next build && next export",
+    "export": "next build && next export",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@project-serum/anchor": "^0.25.0",
     "@solana-mobile/wallet-adapter-mobile": "^0.9.2",
     "@solana/spl-token": "^0.3.5",
     "@solana/wallet-adapter-base": "^0.9.17",
@@ -18,7 +19,6 @@
     "@solana/wallet-adapter-react-ui": "^0.9.17",
     "@solana/wallet-adapter-wallets": "^0.19.0",
     "@solana/web3.js": "^1.63.1",
-    "@project-serum/anchor":"^0.25.0",
     "daisyui": "^2.27.0",
     "next": "12.3.0",
     "react": "18.2.0",
@@ -27,6 +27,8 @@
     "react-loader-spinner": "^5.3.4",
     "react-shimmer": "^3.2.0",
     "react-use": "^17.4.0",
+    "sweetalert2": "^11.6.5",
+    "sweetalert2-react-content": "^5.0.7",
     "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
