@@ -1,5 +1,4 @@
 import {IDL} from './types/potluck';
-import * as idlJson from '../../../target/idl/potluck.json';
 
 import * as anchor from "@project-serum/anchor";
 import { Connection, PublicKey } from '@solana/web3.js';
