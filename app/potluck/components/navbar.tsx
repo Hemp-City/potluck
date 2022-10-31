@@ -2,7 +2,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletConnectButton, WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useState,useEffect } from "react";
 import toast from "react-hot-toast";
-import { useWindowScroll } from "react-use";
 
 function Navbar() {
     const { connected } = useWallet()
