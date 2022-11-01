@@ -284,7 +284,7 @@ function MainCard() {
                         </div>
                     </div>
                     <div className='flex justify-between items-center text-center mb-2 '>
-                        <p className='text-sm'>Winner Draw</p>
+                        <p className='text-sm'>Winner Announcement</p>
                         <CountdownTimer 
                             endInTimestamp={sessionStaticInfo.end_timestamp} 
                             timerStarted={()=>{setLockSession(false)}}
@@ -346,7 +346,7 @@ function MainCard() {
                 {
                     connected ? 
                         <button onClick={()=>{buyTicket()}} className="btn btn-block mt-4 btn-primary text-white " 
-                            disabled={isBuying || lockSession }>
+                            disabled={isBuying || lockSession || ticketsOwned == sessionStaticInfo.max_paid_tickets}>
                             Play Now
                         </button> 
                         :
