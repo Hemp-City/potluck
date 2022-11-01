@@ -25,6 +25,7 @@
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.0",
     "react-loader-spinner": "^5.3.4",
+    "react-share": "^4.4.1",
     "react-shimmer": "^3.2.0",
     "react-use": "^17.4.0",
     "sweetalert2": "^11.6.5",
