@@ -36,7 +36,7 @@ createCommand('init-session')
 
     let entrants = web3.Keypair.generate()
     // let e =  web3.Keypair.generate()
-    let space_needed = max_entrants*32; // 32 bytes / publickey
+    let space_needed = max_entrants*6; // 32 bytes / publickey
     let payment_token_mint = APP_CONFIG.network=="devnet"? 
         new web3.PublicKey("9m1AUciQjityTXiqPnV1KyVZK2dzVAxFxdSVSNeJhosX"): // USDC dummy | minted by self
         // new web3.PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"): // USDC devnet
@@ -218,7 +218,7 @@ createCommand("show-session").argument("<session_id>").action(async function(ses
         creator: ${data.creator.toBase58()},
         paymentTokenMint: ${data.paymentTokenMint.toBase58()}
         pricePerTIcket: ${data.pricePerTicket.toNumber()},
-        winner: ${data.winner?data.winner.toBase58():"None"}
+        winner: ${data.winner}
     `)
     // console.log("Entrants:",entrants)
     // accounts[0].entrants;
@@ -294,21 +294,27 @@ createCommand("show-user").argument("<session_id>").action(async function(sessio
 createCommand("dump-entrants").argument("<session_id>").action(async function(session_id){
     let session_acc = await getSessionAccountById(session_id)
     
-    let bb = "3VqwFviPBqG9znZa2rfh4skQ2QbU81vLrXbYQqwgiti4".slice(0,6);
-    let bc = bs58.encode(Buffer.from(bb));
-    console.log(bb,bc,bs58.decode(bc));
+    // let bb = "3VqwFviPBqG9znZa2rfh4skQ2QbU81vLrXbYQqwgiti4".slice(0,6);
+    // let bc = bs58.encode(Buffer.from(bb));
+    // console.log(bb,bc,bs58.decode(bc));
 
-    return
+    // return
     let entrants = session_acc.account.entrants
     let entrants_info = await anchorClient.program.account.entrants.fetch(entrants);
 
-    console.log("entrant key:",entrants.toBase58());
+    console.log("entrant key:",entrants.toBase58(),entrants_info.total);
 
     const ENTRANT_SIZE = 6;
     let data = await anchorClient.connection.getAccountInfo(entrants)
 
-    let sliced_data = data.data.slice(16,ENTRANT_SIZE*entrants_info.total);
 
+    let sliced_data = data.data.slice(16,16+ENTRANT_SIZE*entrants_info.total).toString();
+    
+    for(let i = 0; i<  ENTRANT_SIZE*entrants_info.total;i+=ENTRANT_SIZE){
+        console.log(sliced_data.slice(i,i+ENTRANT_SIZE));
+    }
+    // Buffer.from('','hex').readDoubleBE(0)
+    return
     let occurences = {}
     for(let i=ENTRANT_SIZE; i<ENTRANT_SIZE*entrants_info.total; i+=ENTRANT_SIZE){
         let slice = data.data.slice(i,i+ENTRANT_SIZE);
@@ -422,6 +428,33 @@ createCommand("create-account").argument("<space_needed>").action(space=>{
     console.log("acc:",acc.publicKey.toBase58())
     createAccount(acc,parseInt(space)*32)
 
+})
+
+createCommand("test").action(async ()=>{
+
+    let winner = "6jrbcg6S3aeoovyWkZsE1tqtt7rq3z7MA2NnbYbjPQKL";
+    let invite_code = winner.toString().slice(0,6);
+    invite_code = bs58.encode(new TextEncoder().encode(invite_code));
+
+    console.log(invite_code)
+    let filter = {
+        memcmp:{
+            offset: 8+2+32+1+4, // disc + ...
+            bytes: invite_code
+        }
+    };
+    let accs = await anchorClient.program.account.potSession.all([filter]);
+
+    console.log(accs)
+    return accs;
+
+
+    let pubkeys = [...new Array(100000)].map(()=>{
+        return  web3.Keypair.generate().publicKey.toString().slice(0,6)
+    })
+
+    let sett = new Set(pubkeys)
+    console.log(pubkeys.length,sett.size)
 })
 
 

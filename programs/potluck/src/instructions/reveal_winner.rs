@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::sysvar::{self, recent_blockhashes::RecentBlockhashes}};
 
-use crate::{state::{PotSession, Entrants}, TIME_BUFFER, errors::PotluckError, recent_blockhashes, randomness_tools};
+use crate::{state::{PotSession, Entrants,}, TIME_BUFFER, errors::PotluckError, recent_blockhashes, randomness_tools};
 
 
 #[derive(Accounts)]
@@ -58,12 +58,18 @@ pub fn handler(ctx: Context<RevealWinner>,_session_id: u16) -> Result<()> {
 
     msg!("Winner index : {}",winner_index);
 
-    let winner_pubkey = Entrants::get_entrant(
+    // let winner_pubkey = Entrants::get_entrant(
+    //     entrants.to_account_info().data.borrow(),
+    //     winner_index as usize
+    // );
+    let winner_code = Entrants::get_entrant_code(
         entrants.to_account_info().data.borrow(),
         winner_index as usize
     );
 
-    session.winner = Some(winner_pubkey);
+    session.winner = Some(winner_code);
+
+    // session.winner = Some(winner_pubkey);
 
     Ok(())
 }

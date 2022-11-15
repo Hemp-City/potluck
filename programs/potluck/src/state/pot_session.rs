@@ -5,7 +5,8 @@ use anchor_lang::prelude::*;
 pub struct PotSession{
     pub session_id : u16,
     pub creator:Pubkey,
-    pub winner:Option<Pubkey>,
+    pub winner: Option<String>,
+    // pub winner:Option<Pubkey>,
     pub randomness: Option<[u8;32]>,
     pub pot_claimed:bool,
     pub start_timestamp: i64,
@@ -15,4 +16,8 @@ pub struct PotSession{
     pub price_per_ticket:u64,
     pub payment_token_mint:Pubkey,
     pub entrants:Pubkey
+}
+
+impl PotSession {
+    pub const MAX_SIZE :usize = 2 + 32 + (1 + 4 + 6) + (1+ 1*32) + 1 +  8 + 8 + 2 + 2 + 8 + 32 + 32;
 }

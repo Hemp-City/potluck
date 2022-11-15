@@ -24,7 +24,7 @@ pub struct InitPotSession<'info>{
         ],
         bump,
         payer = payer,
-        space= 8 + std::mem::size_of::<PotSession>()
+        space= 8 + PotSession::MAX_SIZE
     )]
     pub pot_session_acc : Box<Account<'info,PotSession>>, // pot session acc
     // pub 

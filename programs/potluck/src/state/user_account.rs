@@ -14,5 +14,5 @@ pub struct UserAccount{
 
 impl UserAccount {
     // + (4+ 40)for identifier
-    pub const MAX_SIZE:usize = (1+32) +(4+32)+4+4+4+4; // for string 4 + length in bytes  
+    pub const MAX_SIZE:usize = (1+32) +(4+6)+2+2+2+2; // for string 4 + length in bytes  
 }

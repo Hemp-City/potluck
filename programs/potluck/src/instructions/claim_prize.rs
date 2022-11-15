@@ -56,8 +56,11 @@ pub fn handler(ctx:Context<ClaimPrize>,session_bump:u8) -> Result<()>{
         return err!(PotluckError::WinnerNotDrawn);
     }
 
+    let invite_code = &ctx.accounts.payer.key.to_string()[0..6];
     // invalid winner check
-    require_eq!(session.winner.unwrap(),ctx.accounts.payer.key(),PotluckError::InvalidWinner);
+    // checking invite code
+    require_eq!(session.winner.as_ref().unwrap().as_str(),invite_code,PotluckError::InvalidWinner);
+    // require_eq!(session.winner.unwrap(),ctx.accounts.payer.key(),PotluckError::InvalidWinner);
     
     // winner already claimed or not
     require_neq!(session.pot_claimed,true,PotluckError::PrizeAlreadyClaimed);
@@ -68,13 +71,7 @@ pub fn handler(ctx:Context<ClaimPrize>,session_bump:u8) -> Result<()>{
 
     // let pot_session_bump = ctx.bumps.get("pot_session_acc").unwrap().to_le_bytes();
     let pot_session_bump = session_bump.to_be_bytes();
-    // let session_key = session.key();
-    /* let session_treasury_seeds = &[
-        b"pot_session_treasury".as_ref(),
-        session_key.as_ref(),
-        bump.as_ref()
-        // bump,
-    ]; */
+
     let session_id = session.session_id.to_le_bytes();
     let pot_session_seeds = &[
         b"pot_session_acc".as_ref(),

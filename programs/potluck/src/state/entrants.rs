@@ -1,4 +1,4 @@
-use std::{cell::{Ref, RefMut}, ops::Add, borrow::Borrow};
+use std::{cell::{Ref, RefMut}, ops::Add, borrow::Borrow, io::Read};
 
 use anchor_lang::prelude::*;
 
@@ -19,12 +19,17 @@ impl Entrants {
     /// The size of entrants excluding the entrants array
     const BASE_SIZE: usize = 8 + 4 + 4;
 
+    pub fn get_entrant_code(entrants_data: Ref<&mut [u8]>, index: usize) -> String {
+        let start_index = Entrants::BASE_SIZE + 6 * index;
+        String::from_utf8(entrants_data[start_index..start_index+6].to_vec()).unwrap()
+        // Pubkey::new(&entrants_data[start_index..start_index + 32])
+    }
     pub fn get_entrant(entrants_data: Ref<&mut [u8]>, index: usize) -> Pubkey {
         let start_index = Entrants::BASE_SIZE + 32 * index;
         Pubkey::new(&entrants_data[start_index..start_index + 32])
     }
 
-    pub fn append_entrant(
+    pub fn append_entrant_old(
         &mut self,
         mut entrants_data: RefMut<&mut [u8]>,
         entrant: Pubkey,
@@ -44,7 +49,7 @@ impl Entrants {
         Ok(())
     }
     // append only invite code
-    pub fn append_entrant_v2(
+    pub fn append_entrant(
         &mut self,
         mut entrants_data: RefMut<&mut [u8]>,
         entrant: Pubkey,
@@ -53,8 +58,9 @@ impl Entrants {
         if self.total.add(quantity as u32) >= self.max {
             return Err(PotluckError::NotEnoughTicketsLeft.into());
         }
-        let sliced_entrant_code = &entrant.to_bytes()[0 .. 6];
-        msg!("Appending entrant {}",entrant.to_string());
+        let invite_code = &entrant.to_string();
+        let sliced_entrant_code = &invite_code.as_bytes()[0 .. 6];
+        msg!("Appending entrant {:?}",entrant.to_string());
         let current_index = Entrants::BASE_SIZE + 6 * self.total as usize;
         let entrant_slice: &mut [u8] = &mut entrants_data[current_index..current_index + 6*quantity as usize];
         // entrant_slice.copy_from_slice(&entrant.to_bytes().repeat(quantity as usize));
