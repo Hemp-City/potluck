@@ -22,6 +22,7 @@
     "daisyui": "^2.27.0",
     "next": "12.3.0",
     "react": "18.2.0",
+    "react-confetti": "^6.1.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.4.0",
     "react-loader-spinner": "^5.3.4",

@@ -17,6 +17,9 @@ import { useSearchParam, } from 'react-use';
 import ClaimPrize from './claim_prize';
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import ReactConfetti from 'react-confetti';
+import SizedConfetti from './sized_confetti';
+import CountdownButton from './countdown_button';
 
 const MySweetAlert = withReactContent(Swal);
 // injectStyle()
@@ -38,6 +41,7 @@ let sessionStaticInfo = {
     price:1,
     estimated_prize:'-',
     end_timestamp: new Date("10 Oct 1997 00:00:00").getTime()/1000,
+    start_timestamp: new Date("16 November 2022 22:43:00 ").getTime()/1000,
     plays_left:0,
     max_paid_tickets:1,
     max_free_tickets:0,
@@ -58,8 +62,12 @@ function MainCard() {
     const [ticketsLeft,setticketsLeft] = useState(0)
     const [isBuying,setIsBuying] = useState(false)
     const [lockSession,setLockSession] = useState(false)
+    const [sessionStarted, setSessionStarted] = useState(false);
+    
     const [ticketsOwned,setTicketsOwned] = useState(0);
+    
     const quantityRef = useRef<HTMLSelectElement>(null);
+
     // const [fetchState,setFetchState] = useState(FetchState.Idle);
 
     const fetchStateMemo = useMemo(()=>{
@@ -113,6 +121,11 @@ function MainCard() {
                 }
                 // potluckSDK.userAccoun
                 sessionStaticInfo.end_timestamp = potluckSDK.sessionInfo.account.endTimestamp.toNumber();
+                sessionStaticInfo.start_timestamp = potluckSDK.sessionInfo.account.startTimestamp.toNumber();
+                if ( new Date(sessionStaticInfo.start_timestamp*1000) < new Date()){
+                    setSessionStarted(true);
+                }
+
                 setticketsLeft(potluckSDK.entrantsData.max - potluckSDK.entrantsData.total);
 
                 // 
@@ -144,7 +157,9 @@ function MainCard() {
         setIsBuying(true)
         
         try{
+            // calling the SDK
             await potluckSDK.buyTicket(parseInt(quantityRef.current?.value!),inviteCode || undefined);
+            showFirstBuyToast()
         }
         catch(err:any){
             // Error().
@@ -208,6 +223,7 @@ function MainCard() {
         console.log(result)
 
     }
+    // ShowFirstBuyToast()
     // console.count("MainCard")
     return ( 
         
@@ -244,7 +260,7 @@ function MainCard() {
             tab == Tabs.Live &&
         
             <div className="flex flex-col md:flex-row p-8">
-                <img src={bannerImg.src} alt="Banner image" className="w-full md:w-2/5 md:mr-8 rounded-lg  md:basis-1/2 self-start"/>
+                <img onClick={showFirstBuyToast} src={bannerImg.src} alt="Banner image" className="w-full md:w-2/5 md:mr-8 rounded-lg  md:basis-1/2 self-start"/>
 
                
                 <div className="flex flex-col md:basis-2/3 md:px-8 md:py-4 mt-2 md:mt-0 md:border md:rounded-lg ">
@@ -317,41 +333,52 @@ function MainCard() {
                     </div>
 
                     
+                    {
+                        sessionStarted && 
+                        <>
 
-                    <div className='flex justify-between items-center text-center mb-2'>
-                        <p className='text-sm'>Chances</p>
-                        <div className="flex items-center place-items-center gap-2">
-                            <select id="quantity-select" ref={quantityRef} className="select select-primary w-full max-w-xs" >
-                                {
-                                    [...new Array((sessionStaticInfo.max_paid_tickets-ticketsOwned) || 1)].map((x,i)=>{
+                        <div className='flex justify-between items-center text-center mb-2'>
+                            <p className='text-sm'>Chances</p>
+                            <div className="flex items-center place-items-center gap-2">
+                                <select id="quantity-select" ref={quantityRef} className="select select-primary w-full max-w-xs" >
+                                    {
+                                        [...new Array((sessionStaticInfo.max_paid_tickets-ticketsOwned) || 1)].map((x,i)=>{
 
-                                        return <option value={i+1} key={i+1}>{i+1}</option>
-                                    })
-                                }
-                            
-                            </select>
+                                            return <option value={i+1} key={i+1}>{i+1}</option>
+                                        })
+                                    }
+                                
+                                </select>
 
-                        </div>
-                    </div>    
-                    <progress className="progress progress-primary  mb-2 mt-4" 
-                        value={ticketsLeft} 
-                        max={potluckSDK.entrantsData? potluckSDK.entrantsData.max : 1} />
+                            </div>
+                        </div>    
+                        <progress className="progress progress-primary  mb-2 mt-4" 
+                            value={ticketsLeft} 
+                            max={potluckSDK.entrantsData? potluckSDK.entrantsData.max : 1} />
 
+                        </>
+                    }
                     {/* {
                         sessionInfoFetched &&
                     <p>Token: {potluckSDK.sessionInfo.startTimestamp}</p>
                     } */}
                 </div>
 
-                {
-                    connected ? 
-                        <button onClick={()=>{buyTicket()}} className="btn btn-block mt-4 btn-primary text-white " 
-                            disabled={isBuying || lockSession || ticketsOwned == sessionStaticInfo.max_paid_tickets}>
-                            Play Now
-                        </button> 
-                        :
-                    <WalletMultiButton  className="btn btn-primary mt-4 " children={"Play Now"} />
 
+                {
+                    !sessionStarted?
+
+                    <CountdownButton timestamp={sessionStaticInfo.start_timestamp} timeOver={()=>setSessionStarted(true)}></CountdownButton> 
+
+                    :(
+                        connected ? 
+                            <button onClick={()=>{buyTicket()}} className="btn btn-block mt-4 btn-primary text-white " 
+                                disabled={isBuying || lockSession || ticketsOwned == sessionStaticInfo.max_paid_tickets}>
+                                Play Now
+                            </button> 
+                            :
+                        <WalletMultiButton  className="btn btn-primary mt-4 " children={"Play Now"} />
+                    )
                 }
 
                 {
@@ -361,6 +388,9 @@ function MainCard() {
                         <p className='text-center mt-2 md:text-sm font-thin text-xs'>Get 1 free ticket on each play using your invite link.</p>
                     </>    
                 }
+
+               
+
 
                 {/* <button className='mt-4 btn' onClick={signLoginMessage}>Sign</button> */}
                     {/* {
@@ -379,10 +409,58 @@ function MainCard() {
             }
 
           <ReferralComponent userAccount={potluckSDK.userAccount}/>
-
         </div>
      );
 
 }
 
+let showFirstBuyToast = ( function (){
+    // memoized the function so the only works for once
+    let hasTriggered = false;
+    return ()=>{
+        if (hasTriggered) return;
+        
+        hasTriggered = true;
+        toast.remove("firstBuyToast")
+        toast.custom((t) => (
+            <div
+            className={`${
+                t.visible ? 'animate-enter' : 'animate-leave'
+            } max-w-md w-full bg-green-100  shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+            >
+            <div className="flex-1 w-0 p-4">
+                <div className="flex items-start">
+                <div className="flex-shrink-0 pt-1">
+                    <img
+                    className="w-14"
+                    src="icons/prize.png"
+                    alt=""
+                    />
+                </div>
+                <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-primary font-bungee">
+                    Wohoo! Good play! 
+                    </p>
+                    <p className="mt-1 text-sm text-slate-800">
+                    The winner announcement is made after the countdown timer stops. Play more to win.
+                    </p>
+                </div>
+                </div>
+            </div>
+            <div className="flex border-l border-gray-200">
+                <button
+                onClick={() => toast.remove(t.id)}
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                Close
+                </button>
+            </div>
+            </div>
+        ),{
+            id:"firstBuyToast",
+            position:"bottom-center",
+            duration:1/0
+        })
+    }
+})();
 export default MainCard;

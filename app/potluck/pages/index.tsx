@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import AboutComponent from '../components/about_component'
 import MainCard from '../components/main_card'
 import Navbar from '../components/navbar'
+import SizedConfetti from '../components/sized_confetti'
 // import {useSta} from 'react';
 const Home: NextPage = () => {
 
@@ -38,7 +39,6 @@ const Home: NextPage = () => {
       
       
           <Navbar></Navbar>
-
           {/* <!-- Page content here --> */}
           {/* Content */}
           <div  className='flex flex-col items-center md:py-10 py-8 ' >

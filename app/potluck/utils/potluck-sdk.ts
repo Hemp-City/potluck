@@ -271,6 +271,7 @@ export class PotluckSDK {
     }
 
     getInvitersAccount = async (invite_code:string) =>{
+
         
         let filter = {
             memcmp:{
@@ -341,10 +342,12 @@ export class PotluckSDK {
     }
 
     checkIsWinner = async (winner:PublicKey)=>{
+
+        let invite_code = winner.toString().slice(0,6);
         let filter = {
             memcmp:{
-                offset: 8+2+32+1, // disc + ...
-                bytes: winner.toBase58()
+                offset: 8 + 2 + 32 + 1 + 4, // disc + ...
+                bytes: bs58.encode(new TextEncoder().encode(invite_code))
             }
         };
         let accs = await this.program?.account.potSession.all([filter]);

@@ -494,7 +494,7 @@ export type Potluck = {
           {
             "name": "winner",
             "type": {
-              "option": "publicKey"
+              "option": "string"
             }
           },
           {
@@ -1153,7 +1153,7 @@ export const IDL: Potluck = {
           {
             "name": "winner",
             "type": {
-              "option": "publicKey"
+              "option": "string"
             }
           },
           {
