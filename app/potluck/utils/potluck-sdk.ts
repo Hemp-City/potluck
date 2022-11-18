@@ -55,12 +55,20 @@ export class PotluckSDK {
         const ep = {
             "local":"http://localhost:8899",
             "devnet":"https://api.devnet.solana.com",
-            "mainnet":"https://mainnet.com"
+            "mainnet":process.env.NEXT_PUBLIC_MAINNET!,
+        }
+
+        let endpoint = ep.local;
+        if(process.env.NEXT_PUBLIC_NETWORK=="devnet"){
+            endpoint=ep.devnet;
+        }
+        else if(process.env.NEXT_PUBLIC_NETWORK=="mainnet" ){
+            endpoint = ep.mainnet;
         }
         this.connection = new Connection(
-             process.env.NEXT_PUBLIC_devMode?
-                (process.env.NEXT_PUBLIC_NETWORK == "DEVNET" ? ep.devnet:ep.local) : ep.mainnet
+             endpoint
         )
+        console.log(this.connection)
         this.provider = new anchor.AnchorProvider(
             this.connection, 
             wallet,
