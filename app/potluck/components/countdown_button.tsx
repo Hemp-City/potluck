@@ -9,7 +9,7 @@ interface CountdownProps{
 
 function CountdownButton(props:CountdownProps) {
 
-    console.log("timer button:",props.timestamp)
+    // console.log("timer button:",props.timestamp)
     let [days,hours,mins,secs,timerEnded] = useCountdown(props.timestamp);
     // const [timeEnded,setTimeEnded] = useState(false)
     // console.count("Timer")

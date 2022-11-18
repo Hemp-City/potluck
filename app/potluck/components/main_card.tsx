@@ -41,7 +41,7 @@ let sessionStaticInfo = {
     price:1,
     estimated_prize:'-',
     end_timestamp: new Date("10 Oct 1997 00:00:00").getTime()/1000,
-    start_timestamp: new Date("16 November 2022 22:43:00 ").getTime()/1000,
+    start_timestamp: new Date("16 November 2023 22:43:00 ").getTime()/1000,
     plays_left:0,
     max_paid_tickets:1,
     max_free_tickets:0,
@@ -122,9 +122,12 @@ function MainCard() {
                 // potluckSDK.userAccoun
                 sessionStaticInfo.end_timestamp = potluckSDK.sessionInfo.account.endTimestamp.toNumber();
                 sessionStaticInfo.start_timestamp = potluckSDK.sessionInfo.account.startTimestamp.toNumber();
+
+                // console.log("Start timestamp:",sessionStaticInfo.start_timestamp)
                 if ( new Date(sessionStaticInfo.start_timestamp*1000) < new Date()){
                     setSessionStarted(true);
                 }
+
 
                 setticketsLeft(potluckSDK.entrantsData.max - potluckSDK.entrantsData.total);
 
