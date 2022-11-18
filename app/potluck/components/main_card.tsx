@@ -20,6 +20,7 @@ import withReactContent from 'sweetalert2-react-content'
 import ReactConfetti from 'react-confetti';
 import SizedConfetti from './sized_confetti';
 import CountdownButton from './countdown_button';
+import { Puff, ThreeDots } from 'react-loader-spinner';
 
 const MySweetAlert = withReactContent(Swal);
 // injectStyle()
@@ -230,11 +231,30 @@ function MainCard() {
     // console.count("MainCard")
     return ( 
         
-        <div className="card bg-base-100 shadow-xl w-11/12 md:w-9/12  h-max flex flex-col p-2  ">
-            <div><Toaster position='bottom-center'/></div>
+        <div className="card bg-base-100 shadow-xl w-11/12 md:w-9/12  h-max flex flex-col  ">
+            {
+                fetchStateMemo.state == FetchState.Pending &&
+                <div className='absolute items-center w-full h-full bg-gray-800 bg-blend-overlay opacity-50 z-50 left-'>
 
+                    <ThreeDots
+                            height="80"
+                            width="80"
+                            radius={9}
+                            color="#FFFF00"
+                            ariaLabel="three-dots-loading"
+                            wrapperStyle={{}}
+                            wrapperClass="absolute m-auto left-36 top-1/2 md:top-1/3 md:left-1/2 "
+                            visible={true}
+                            />
+                </div>
+            }
+            {/* toaster */}
+            <div>
+                <Toaster position='bottom-center'/>
+            </div>
+            {/* <div></div> */}
             {/* TABS */}
-            <div className='flex flex-col items-center '>
+            <div className='flex flex-col items-center pt-2'>
 
                 <div className="tabs">
                     <a className={`tab !border-primary ${tab==Tabs.Live?"tab-bordered tab-active":""}`}
@@ -262,13 +282,15 @@ function MainCard() {
         {
             tab == Tabs.Live &&
         
-            <div className="flex flex-col md:flex-row p-8">
-                <img onClick={showFirstBuyToast} src={bannerImg.src} alt="Banner image" className="w-full md:w-2/5 md:mr-8 rounded-lg  md:basis-1/2 self-start"/>
+            <div className="flex flex-col md:flex-row p-8 ">
+                
+                <img onClick={showFirstBuyToast} src={bannerImg.src} alt="Banner image" className=" w-full md:w-2/5 md:mr-8 rounded-lg  md:basis-1/2 self-start"/>
 
                
-                <div className="flex flex-col md:basis-2/3 md:px-8 md:py-4 mt-2 md:mt-0 md:border md:rounded-lg ">
+                <div className="flex flex-col md:basis-2/3 md:px-8 md:py-4 mt-2 md:mt-0 md:border md:rounded-lg" >
 
-                    <div className='flex justify-between my-4 '>
+                    
+                    <div className='flex justify-between my-4'>
                         <h3 className='font-semibold  font-bungee text-primary'>Play &amp; Win The Pot</h3>
                         
                         <a className='text-xs text-primary flex items-center' href='#about'>Details
