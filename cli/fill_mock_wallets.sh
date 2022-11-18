@@ -14,9 +14,12 @@ spl-token transfer EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 10 $(solana addr
 echo "Airdrop to hot wallets"
 solana airdrop 10 B2wjnGwsx26fRM6qYKKCMd2inHygfw84EnM3wUmic6dj
 solana airdrop 10 6jrbcg6S3aeoovyWkZsE1tqtt7rq3z7MA2NnbYbjPQKL
+solana airdrop 10 B8hRMjjBddbp3UxjtVmE13g1mWQpTbMfz8MwTmezpwBE
 echo "Funding spl to hot wallets.."
 spl-token transfer EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50 B2wjnGwsx26fRM6qYKKCMd2inHygfw84EnM3wUmic6dj --fund-recipient
 spl-token transfer EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50 6jrbcg6S3aeoovyWkZsE1tqtt7rq3z7MA2NnbYbjPQKL --fund-recipient
+spl-token transfer EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50 B8hRMjjBddbp3UxjtVmE13g1mWQpTbMfz8MwTmezpwBE --fund-recipient
+
 echo "Deploying program!"
 anchor build && anchor deploy
 

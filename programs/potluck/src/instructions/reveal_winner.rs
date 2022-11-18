@@ -1,4 +1,4 @@
-use anchor_lang::{prelude::*, solana_program::sysvar::{self, recent_blockhashes::RecentBlockhashes}};
+use anchor_lang::{prelude::*, solana_program::sysvar::{self}};
 
 use crate::{state::{PotSession, Entrants,}, TIME_BUFFER, errors::PotluckError, recent_blockhashes, randomness_tools};
 

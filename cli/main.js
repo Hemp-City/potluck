@@ -17,6 +17,8 @@ import { transferChecked } from '@solana/spl-token';
 import { getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 
 import * as fs from 'fs'
+
+const PROTO_TREASURY =  new web3.PublicKey("B8hRMjjBddbp3UxjtVmE13g1mWQpTbMfz8MwTmezpwBE");
 /**
  * @type {AnchorClient}
  */
@@ -42,7 +44,7 @@ createCommand('init-session')
         // new web3.PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"): // USDC devnet
         new web3.PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); //USDC localnet/mainnet
 
-    let team_treasury = new web3.PublicKey("6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR") // test treasruy
+    // let proto_treasury = new web3.PublicKey("6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR") // test treasruy
     // let session_treasury = 
     let max_paid_tickets_per_entrants = max_paid_tickets;
     let max_free_tickets_per_entrants = 1;
@@ -141,10 +143,19 @@ createCommand("buy-ticket").argument("<session_id>").action(async function(sessi
     let session_acc = (await getSessionAccountById(session_id));
     let payment_token_mint = session_acc.account.paymentTokenMint;
     let entrants = session_acc.account.entrants;
-    let team_treasury = new web3.PublicKey("6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR")
-    let team_treasury_assc_acc = await getAssociatedTokenAddress(
+
+    let [team_treasury_assc_acc,_b] = await web3.PublicKey.findProgramAddress(
+        [
+            Buffer.from("pot_team_treasury"),
+            session_acc.publicKey.toBuffer()
+        ],
+        anchorClient.program.programId
+    );
+    
+    // let team_treasury = new web3.PublicKey("6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR")
+    let proto_treasury_assc_acc = await getAssociatedTokenAddress(
         payment_token_mint,
-        team_treasury,
+        PROTO_TREASURY,
         false,
         TOKEN_PROGRAM_ID,
         ASSOCIATED_PROGRAM_ID
@@ -157,9 +168,6 @@ createCommand("buy-ticket").argument("<session_id>").action(async function(sessi
         ASSOCIATED_PROGRAM_ID
     )
 
-    // console.log(session_acc)
-    // return
-    // console.log(team_treasury_assc_acc)
     console.log("Assc accounts = Team:",team_treasury_assc_acc.toBase58(),"Buyer:",buyer_token_acc.toBase58())
     let tx = anchorClient.program.methods.buyTicket(
         new BN(session_id,'le'),
@@ -173,8 +181,8 @@ createCommand("buy-ticket").argument("<session_id>").action(async function(sessi
             buyerTokenAccount:buyer_token_acc,
             paymentTokenMint:payment_token_mint,
             entrants:entrants,
-            teamTreasuryAssociatedAccount:team_treasury_assc_acc,
-
+            teamTreasury:team_treasury_assc_acc,
+            protoAssociatedAccount:proto_treasury_assc_acc,
             payer:wallet.publicKey,
         }
     ).signers([wallet]);
@@ -186,6 +194,24 @@ createCommand("buy-ticket").argument("<session_id>").action(async function(sessi
     tx = await tx.rpc();
     console.log("tx:",tx)
     
+})
+
+
+createCommand("add-ticket").argument("<session_id>").argument("<user>").action(async function(session_id,user){
+    let session_acc = await getSessionAccountById(session_id)
+    let entrants = session_acc.account.entrants;
+    let user_key = new web3.PublicKey(user);
+    let tx = await anchorClient.program.methods.addTicket(
+        new BN(session_id,'le'),
+    ).accounts(
+        {
+            potSessionAcc:session_acc.publicKey,
+            entrants:entrants,
+            user: user_key,
+            creator:wallet.publicKey
+        }
+    ).signers([wallet]).rpc()
+    console.log("tx:",tx);
 })
 createCommand("show-session").argument("<session_id>").action(async function(session_id){
      /**
@@ -199,6 +225,8 @@ createCommand("show-session").argument("<session_id>").action(async function(ses
     }
     
     let accounts = await anchorClient.program.account.potSession.all([filter])
+
+    // return
     let data = accounts[0].account
     
     console.log(accounts[0].account)
@@ -219,8 +247,8 @@ createCommand("show-session").argument("<session_id>").action(async function(ses
         paymentTokenMint: ${data.paymentTokenMint.toBase58()}
         pricePerTIcket: ${data.pricePerTicket.toNumber()},
         winner: ${data.winner}
-    `)
-    // console.log("Entrants:",entrants)
+        `)
+        // console.log("Entrants:",entrants)
     // accounts[0].entrants;
 
 
@@ -291,9 +319,9 @@ createCommand("show-user").argument("<session_id>").action(async function(sessio
 
 })
 
+
 createCommand("dump-entrants").argument("<session_id>").action(async function(session_id){
     let session_acc = await getSessionAccountById(session_id)
-    
     // let bb = "3VqwFviPBqG9znZa2rfh4skQ2QbU81vLrXbYQqwgiti4".slice(0,6);
     // let bc = bs58.encode(Buffer.from(bb));
     // console.log(bb,bc,bs58.decode(bc));
@@ -422,6 +450,46 @@ createCommand("claim-prize").argument("<session_id>").action(async function(sess
     console.log(tx)
 
 })
+
+createCommand("claim-team-treasury").argument("<session_id>").argument("<receiver>").action(async function(session_id,receiver){
+
+    let session = await getSessionAccountById(session_id);
+    const sessionKey = session.publicKey
+        let userAccountSeed = Buffer.alloc(2)
+        userAccountSeed.writeUInt16LE(session_id)
+
+        // pass the bump to the ix, required for signing the token transfer
+        let [_,sessionBump] = await web3.PublicKey.findProgramAddress([
+            Buffer.from("pot_session_acc"),
+            userAccountSeed,
+            session.account.creator.toBuffer()
+        ],  anchorClient.program.programId
+    );
+    const paymentTokenMint = session.account.paymentTokenMint;
+    receiver = new web3.PublicKey(receiver);
+        // account to recieve the proceedings
+    const recieverAsscAccount = await getOrCreateAssociatedTokenAccount(
+            anchorClient.connection,
+            receiver,
+            paymentTokenMint,
+            wallet.publicKey,
+    );
+    
+    console.log("Receiver:",recieverAsscAccount.address.toBase58())
+
+    // return
+    let tx = await anchorClient.program.methods.claimTeamTreasury(new BN(sessionBump,'le')).accounts(
+        {
+            potSessionAcc:session.publicKey,
+            paymentTokenMint:paymentTokenMint,
+            receiverTokenAccount:recieverAsscAccount.address,
+            creator:wallet.publicKey,
+        }
+    ).rpc();
+
+    console.log(tx)
+
+})
 createCommand("create-account").argument("<space_needed>").action(space=>{
     let acc =  web3.Keypair.generate()
 
@@ -438,12 +506,32 @@ createCommand("test").action(async ()=>{
 
     console.log(invite_code)
     let filter = {
+        
         memcmp:{
             offset: 8+2+32+1+4, // disc + ...
             bytes: invite_code
         }
     };
-    let accs = await anchorClient.program.account.potSession.all([filter]);
+    
+  const accounts = await anchorClient.connection.getProgramAccounts(
+    anchorClient.program.programId, // new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
+    {
+      dataSlice: {
+        offset: 0, // number of bytes
+        length: 0, // number of bytes
+      },
+      filters: [
+        // {
+        //   dataSize: 165, // number of bytes
+        // },
+        filter,
+      ],
+    }
+  );
+
+  console.log(accounts[0].pubkey.toBase58());
+//   return
+    let accs = await anchorClient.program.account.potSession.all([{dataSize:187},filter]);
 
     console.log(accs)
     return accs;
@@ -503,6 +591,26 @@ createCommand("transfer-tokens").argument("<mint>").argument("<amount>").require
     // console.log(mintAcc)
     // spl.Token.
 
+})
+
+createCommand("start-server").action(async function(){
+
+    console.log("Starting server.");
+
+    // anchorClient.connection.``
+
+    // console.log(anchorClient.connection)
+    // new anchor.EventManager(anchorClient.programId,new ANchor)
+    anchorClient.program.addEventListener("BuyTicketEvent",(event,slot)=>{
+        console.log("Event logged:",event,slot)
+    })
+
+    // anchorClient.program.
+    // await anchorClient.ev
+    
+
+    await new Promise(resolve => setTimeout(resolve, 100000000));
+    console.log("Server stopped!")
 })
 // parsing the commands
 program.parse() 

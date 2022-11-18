@@ -1,9 +1,9 @@
-use std::{cell::RefMut, str::FromStr, ops::{AddAssign, Mul, Add}, borrow::{BorrowMut, Borrow}};
+use std::{cell::RefMut, str::FromStr, ops::{AddAssign, Mul, Add}, };
 
 use anchor_lang::{prelude::*};
 use anchor_spl::{token::{TokenAccount, Mint, Token, self}, associated_token::AssociatedToken};
 
-use crate::{state::{UserAccount, PotSession, Entrants}, errors::PotluckError, TEAM_TREASURY, TEAM_FEES_PERC, POT_PERC, INVITES_PER_TICKET};
+use crate::{state::{UserAccount, PotSession, Entrants}, errors::PotluckError, PROTO_FEE_ACCOUNT, TEAM_FEES_PERC, POT_PERC, INVITES_PER_TICKET, PROTO_FEE_PERC};
 
 /**
  * The inviter account is to be passed in remaining accounts. 
@@ -40,6 +40,16 @@ pub struct BuyTicket<'info>{
     )]
     pub session_treasury: Box<Account<'info,TokenAccount>>,
 
+    #[account(
+        mut,
+        seeds = [ 
+            b"pot_team_treasury".as_ref(),
+            pot_session_acc.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub team_treasury:Box<Account<'info,TokenAccount>>,
+
     #[account(address=pot_session_acc.payment_token_mint)]
     pub payment_token_mint : Box<Account<'info,Mint>>,
 
@@ -60,9 +70,9 @@ pub struct BuyTicket<'info>{
     #[account(
         mut, 
         associated_token::mint=payment_token_mint,
-        associated_token::authority = Pubkey::from_str(TEAM_TREASURY).unwrap()
+        associated_token::authority = Pubkey::from_str(PROTO_FEE_ACCOUNT).unwrap()
      )]
-    pub team_treasury_associated_account: Box<Account<'info,TokenAccount>>,
+    pub proto_associated_account: Box<Account<'info,TokenAccount>>,
 
     // #[account(mut)]
     // pub inviter_account:Box<Account<'info,UserAccount>>,
@@ -194,6 +204,7 @@ pub fn handler<'info>(
     // transfer money from the account to session pot
 
     let team_fee =  ((session.price_per_ticket.mul(quantity as u64) as f64) * ((TEAM_FEES_PERC as f64 / 100 as f64))) as u64 ;
+    let proto_fee =  ((session.price_per_ticket.mul(quantity as u64) as f64) * ((PROTO_FEE_PERC as f64 / 100 as f64))) as u64 ;
     let ticket_amount:u64 =  ((session.price_per_ticket.mul(quantity as u64) as f64) * ((POT_PERC as f64 / 100 as f64))) as u64;
     
     
@@ -217,18 +228,38 @@ pub fn handler<'info>(
             ctx.accounts.token_program.to_account_info(),
             token::Transfer{
                 from:ctx.accounts.buyer_token_account.to_account_info(),
-                to:ctx.accounts.team_treasury_associated_account.to_account_info(), 
+                to:ctx.accounts.team_treasury.to_account_info(), 
                 authority: ctx.accounts.payer.to_account_info()
             }
         )
         , team_fee)?;
 
-    
+    // transfer fee to protocol account
+
+    if PROTO_FEE_PERC > 0{
+
+        token::transfer(
+            CpiContext::new(
+                
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer{
+                    from:ctx.accounts.buyer_token_account.to_account_info(),
+                    to:ctx.accounts.proto_associated_account.to_account_info(), 
+                    authority: ctx.accounts.payer.to_account_info()
+                }
+            )
+            , proto_fee)?;
+    }
     // update user account and session state
 
     user_account.total_paid_tickets.add_assign(quantity);
 
 
+    // emit event 
+    emit!(BuyTicketEvent{
+        quantity:quantity,
+        buyer:ctx.accounts.payer.key()
+    });
 
     Ok(())
 }
@@ -291,4 +322,10 @@ fn add_inviter_entry<'info>(
     // Err(error!(PotluckError::InvalidInviter))
     
 
+}
+
+#[event]
+pub struct BuyTicketEvent{
+    quantity:u16,
+    buyer:Pubkey,
 }

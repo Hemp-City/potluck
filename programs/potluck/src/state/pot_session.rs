@@ -15,9 +15,10 @@ pub struct PotSession{
     pub max_free_tickets_per_entrant:u16,
     pub price_per_ticket:u64,
     pub payment_token_mint:Pubkey,
-    pub entrants:Pubkey
+    pub entrants:Pubkey,
+    pub fee_distribution:Option<Vec<u8>> // player,team,protocol // max 3
 }
 
 impl PotSession {
-    pub const MAX_SIZE :usize = 2 + 32 + (1 + 4 + 6) + (1+ 1*32) + 1 +  8 + 8 + 2 + 2 + 8 + 32 + 32;
+    pub const MAX_SIZE :usize = 2 + 32 + (1 + 4 + 6) + (1+ 1*32) + 1 +  8 + 8 + 2 + 2 + 8 + 32 + 32 + (4 + 1 + 1*3);
 }

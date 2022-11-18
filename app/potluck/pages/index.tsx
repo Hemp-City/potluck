@@ -24,7 +24,10 @@ const Home: NextPage = () => {
       <Head>
         <title>Potluck</title>
         <meta name="description" content="Potluck - $1 lottery game on Solana. Play and own pot tickets to win the jackpot." />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png"/>
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png"/>
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png"/>
+        <link rel="manifest" href="favicon/site.webmanifest"/>
         <link rel="preconnect" href="https://fonts.googleapis.com"></link>
         <link rel="preconnect" href="https://fonts.gstatic.com" ></link>
         <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Bungee+Spice&display=swap" rel="stylesheet"></link>

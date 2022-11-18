@@ -55,6 +55,26 @@ export type Potluck = {
           }
         },
         {
+          "name": "teamTreasury",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_team_treasury"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "PotSession",
+                "path": "pot_session_acc"
+              }
+            ]
+          }
+        },
+        {
           "name": "entrants",
           "isMut": true,
           "isSigner": false
@@ -164,6 +184,26 @@ export type Potluck = {
           }
         },
         {
+          "name": "teamTreasury",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_team_treasury"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "PotSession",
+                "path": "pot_session_acc"
+              }
+            ]
+          }
+        },
+        {
           "name": "paymentTokenMint",
           "isMut": false,
           "isSigner": false
@@ -179,7 +219,7 @@ export type Potluck = {
           "isSigner": false
         },
         {
-          "name": "teamTreasuryAssociatedAccount",
+          "name": "protoAssociatedAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -328,6 +368,142 @@ export type Potluck = {
         {
           "name": "sessionBump",
           "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "claimTeamTreasury",
+      "accounts": [
+        {
+          "name": "potSessionAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "teamTreasury",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_team_treasury"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "PotSession",
+                "path": "pot_session_acc"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiverTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "sessionBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "addTicket",
+      "accounts": [
+        {
+          "name": "userAccount",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_user_account"
+              },
+              {
+                "kind": "arg",
+                "type": "u16",
+                "path": "session_id"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "potSessionAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "sessionId",
+          "type": "u16"
         }
       ]
     },
@@ -539,6 +715,12 @@ export type Potluck = {
           {
             "name": "entrants",
             "type": "publicKey"
+          },
+          {
+            "name": "feeDistribution",
+            "type": {
+              "option": "bytes"
+            }
           }
         ]
       }
@@ -576,6 +758,23 @@ export type Potluck = {
           }
         ]
       }
+    }
+  ],
+  "events": [
+    {
+      "name": "BuyTicketEvent",
+      "fields": [
+        {
+          "name": "quantity",
+          "type": "u16",
+          "index": false
+        },
+        {
+          "name": "buyer",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
     }
   ],
   "errors": [
@@ -653,6 +852,16 @@ export type Potluck = {
       "code": 6014,
       "name": "InvalidQuantity",
       "msg": "Invalid quantity"
+    },
+    {
+      "code": 6015,
+      "name": "TotalFeesPercNot100",
+      "msg": "Fees percenetage is not equal to 100"
+    },
+    {
+      "code": 6016,
+      "name": "TreasuryClaimFailed",
+      "msg": "Treasury claim failed"
     }
   ]
 };
@@ -714,6 +923,26 @@ export const IDL: Potluck = {
           }
         },
         {
+          "name": "teamTreasury",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_team_treasury"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "PotSession",
+                "path": "pot_session_acc"
+              }
+            ]
+          }
+        },
+        {
           "name": "entrants",
           "isMut": true,
           "isSigner": false
@@ -823,6 +1052,26 @@ export const IDL: Potluck = {
           }
         },
         {
+          "name": "teamTreasury",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_team_treasury"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "PotSession",
+                "path": "pot_session_acc"
+              }
+            ]
+          }
+        },
+        {
           "name": "paymentTokenMint",
           "isMut": false,
           "isSigner": false
@@ -838,7 +1087,7 @@ export const IDL: Potluck = {
           "isSigner": false
         },
         {
-          "name": "teamTreasuryAssociatedAccount",
+          "name": "protoAssociatedAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -987,6 +1236,142 @@ export const IDL: Potluck = {
         {
           "name": "sessionBump",
           "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "claimTeamTreasury",
+      "accounts": [
+        {
+          "name": "potSessionAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "teamTreasury",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_team_treasury"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "account": "PotSession",
+                "path": "pot_session_acc"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receiverTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentTokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "sessionBump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "addTicket",
+      "accounts": [
+        {
+          "name": "userAccount",
+          "isMut": true,
+          "isSigner": false,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "type": "string",
+                "value": "pot_user_account"
+              },
+              {
+                "kind": "arg",
+                "type": "u16",
+                "path": "session_id"
+              },
+              {
+                "kind": "account",
+                "type": "publicKey",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "potSessionAcc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "entrants",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "sessionId",
+          "type": "u16"
         }
       ]
     },
@@ -1198,6 +1583,12 @@ export const IDL: Potluck = {
           {
             "name": "entrants",
             "type": "publicKey"
+          },
+          {
+            "name": "feeDistribution",
+            "type": {
+              "option": "bytes"
+            }
           }
         ]
       }
@@ -1235,6 +1626,23 @@ export const IDL: Potluck = {
           }
         ]
       }
+    }
+  ],
+  "events": [
+    {
+      "name": "BuyTicketEvent",
+      "fields": [
+        {
+          "name": "quantity",
+          "type": "u16",
+          "index": false
+        },
+        {
+          "name": "buyer",
+          "type": "publicKey",
+          "index": false
+        }
+      ]
     }
   ],
   "errors": [
@@ -1312,6 +1720,16 @@ export const IDL: Potluck = {
       "code": 6014,
       "name": "InvalidQuantity",
       "msg": "Invalid quantity"
+    },
+    {
+      "code": 6015,
+      "name": "TotalFeesPercNot100",
+      "msg": "Fees percenetage is not equal to 100"
+    },
+    {
+      "code": 6016,
+      "name": "TreasuryClaimFailed",
+      "msg": "Treasury claim failed"
     }
   ]
 };

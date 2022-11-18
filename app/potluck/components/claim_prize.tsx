@@ -91,7 +91,7 @@ function ClaimPrize() {
                 </svg>
 
 
-                    <span>Not a winner yet. Better luck next time!</span>
+                    <span>Not a winner or not announced yet. Keep an eye on the announcements!</span>
                 </div>
                 <div className="flex-none">
                     <a className="btn btn-sm btn-primary" href="/">Play More</a>

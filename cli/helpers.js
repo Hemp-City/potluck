@@ -25,7 +25,7 @@ export default class AnchorClient {
     constructor({ programId, config, keypair,idlPath } ) {
         this.programId = programId ;
         this.config = config ;
-        this.connection = new anchor.web3.Connection(this.config.httpUri, 'processed');
+        this.connection = new anchor.web3.Connection(this.config.httpUri,'finalized');
         console.log('\n\nConnected to', this.config.httpUri);
 
         const keypair_priv = loadWalletKey(keypair);
@@ -34,8 +34,10 @@ export default class AnchorClient {
         // const idl = require(idlPath);
         const idl = JSON.parse(fs.readFileSync(APP_CONFIG.idlPath).toString())
         // console.log(idl)
-        this.provider = new anchor.AnchorProvider(this.connection, wallet,{commitment:"processed",preflightCommitment:"processed"});
+        this.provider = new anchor.AnchorProvider(this.connection, wallet,{commitment:"finalized"});
         this.program = new anchor.Program(idl, this.programId, this.provider);
+        this.eventManager = new anchor.EventManager(programId,this.provider);
+
     }
 }
 

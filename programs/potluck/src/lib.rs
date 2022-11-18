@@ -15,9 +15,13 @@ pub mod recent_blockhashes;
 // use anchor_spl::token::{TokenAccount, Token, Mint, Transfer};
 
 const INVITES_PER_TICKET:u16 = 1; // 1 Free ticket for every 2 invites  
-const TEAM_TREASURY:&str = "6rhreNsCWgcLha4AViLwHGBV9vKCw6wVi486SYf6JLvR";
-const TEAM_FEES_PERC:u8 = 10;
-const POT_PERC:u8 = 90;
+const PROTO_FEE_ACCOUNT:&str = "B8hRMjjBddbp3UxjtVmE13g1mWQpTbMfz8MwTmezpwBE";
+// const TEAM_TREASURY_PROD:&str = "B8hRMjjBddbp3UxjtVmE13g1mWQpTbMfz8MwTmezpwBE";
+
+// proto_fee + team_fee + pot_perc = 100%
+const PROTO_FEE_PERC:u8 = 0;
+const TEAM_FEES_PERC:u8 = 20;
+const POT_PERC:u8 = 80;
 const TIME_BUFFER:i64 =20;
 
 declare_id!("PoTeh9dW9VEr6ApxiLintTRoWmZDF6GDRrtSu7zbTo4");
@@ -94,6 +98,17 @@ pub mod potluck {
     pub fn claim_prize(ctx: Context<ClaimPrize>,session_bump:u8) -> Result<()>{
 
         instructions::claim_prize::handler(ctx,session_bump)
+        
+    }
+
+    pub fn claim_team_treasury(ctx: Context<ClaimTeamTreasury>,session_bump:u8) -> Result<()>{
+
+        instructions::claim_team_treasury::handler(ctx,session_bump)
+        
+    }
+    pub fn add_ticket(ctx: Context<AddTicket>,session_id:u16) -> Result<()>{
+
+        instructions::add_ticket::handler(ctx,session_id)
         
     }
     pub fn update_pot_session(

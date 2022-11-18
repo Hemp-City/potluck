@@ -102,15 +102,15 @@ export class PotluckSDK {
         let paymentTokenMint = this.sessionInfo.account.paymentTokenMint;
         let entrants = this.sessionInfo.account.entrants;
         // return
-        let teamTreasury = new anchor.web3.PublicKey(
+        let protoTreasury = new anchor.web3.PublicKey(
             process.env.NEXT_PUBLIC_devMode ? 
-            process.env.NEXT_PUBLIC_DEV_TEAM_TREASURY! : 
-            process.env.NEXT_PUBLIC_PROD_TEAM_TREASURY!
+            process.env.NEXT_PUBLIC_DEV_PROTO_TREASURY! : 
+            process.env.NEXT_PUBLIC_PROD_PROTO_TREASURY!
             );
             
-        let teamTreasuryAssociatedAccount = await getAssociatedTokenAddress(
+        let protoTreasuryAssociatedAccount = await getAssociatedTokenAddress(
             paymentTokenMint,
-            teamTreasury,
+            protoTreasury,
             false,
             TOKEN_PROGRAM_ID,
             ASSOCIATED_PROGRAM_ID
@@ -169,7 +169,7 @@ export class PotluckSDK {
                 buyerTokenAccount:              buyerTokenAccountAddress,
                 paymentTokenMint:               paymentTokenMint,
                 entrants:                       entrants,
-                teamTreasuryAssociatedAccount:  teamTreasuryAssociatedAccount,
+                protoAssociatedAccount:  protoTreasuryAssociatedAccount,
                 payer:                           this.wallet.publicKey,
             }
         )
@@ -350,10 +350,16 @@ export class PotluckSDK {
                 bytes: bs58.encode(new TextEncoder().encode(invite_code))
             }
         };
-        let accs = await this.program?.account.potSession.all([filter]);
+
+        // 187 is potsession size in bytes
+        let accs = await this.program?.account.potSession.all([{dataSize:187},filter]); 
         return accs;
         // console.log("winner:",accs)
     }
+
+    // checkIsWinnerV2 = async (winner:PublicKey)=>{
+
+    // }
 
     claimPrize = async (session:any)=>{
 

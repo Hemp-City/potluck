@@ -46,4 +46,10 @@ pub enum PotluckError{
 
     #[msg("Invalid quantity")]
     InvalidQuantity,
+
+    #[msg("Fees percenetage is not equal to 100")]
+    TotalFeesPercNot100,
+
+    #[msg("Treasury claim failed")]
+    TreasuryClaimFailed,
 }
