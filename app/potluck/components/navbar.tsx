@@ -7,7 +7,7 @@ function Navbar() {
     const { connected } = useWallet()
     // const{x,y} = useWindowScroll();
 
-    let classes = "navbar sticky top-0 z-50  w-full py-4 pr-3 md:pr-6"
+    let classes = "navbar sticky top-0 z-50  w-full py-4 pr-3 md:pr-6 bg-white opacity-95"
     // classes = y>0?classes+"bg-white":classes;
     return (  
         <div className={classes}>
