@@ -2,7 +2,7 @@
 
 Decentralized Lottery protocol on the Solana Blockchain.
 
-# Demo
+# Demo (https://luck.playhemp.city)
 
 Visit: https://luck.playhemp.city
 
