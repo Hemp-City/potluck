@@ -2,7 +2,11 @@
 
 Decentralized Lottery protocol on the Solana Blockchain.
 
-# Technologies Usesd
+# Demo
+
+Visit: https://luck.playhemp.city
+
+# Technologies Used
 
 1. Rust for the contract on Solana
 2. Typescript & Javascript
